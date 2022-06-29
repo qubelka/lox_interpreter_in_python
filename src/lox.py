@@ -1,16 +1,14 @@
+DIGITS = "1234567890"
 
-
-DIGITS = '1234567890'
-
-#Token types
-TT_NUMBER = 'NUMBER'
-TT_PLUS = 'PLUS'
-TT_MINUS = 'MINUS'
-TT_MUL = 'MUL'
-TT_DIV = 'DIV'
-TT_LPAREN = 'LPAREN'
-TT_RPAREN = 'RPAREN'
-TT_EOF = 'EOF'
+# Token types
+TT_NUMBER = "NUMBER"
+TT_PLUS = "PLUS"
+TT_MINUS = "MINUS"
+TT_MUL = "MUL"
+TT_DIV = "DIV"
+TT_LPAREN = "LPAREN"
+TT_RPAREN = "RPAREN"
+TT_EOF = "EOF"
 
 
 class Error(Exception):
@@ -21,19 +19,19 @@ class Error(Exception):
         self.details = details
 
     def as_string(self):
-        result = f'{self.error_name}: {self.details}\n'
-        result += f'File {self.pos_start.fn}, line {self.pos_start.ln+1}'
+        result = f"{self.error_name}: {self.details}\n"
+        result += f"File {self.pos_start.fn}, line {self.pos_start.ln+1}"
         return result
+
 
 class IllegalCharError(Error):
     def __init__(self, pos_start, pos_end, details):
-        super().__init__(pos_start, pos_end, 'Illegal character', details)
+        super().__init__(pos_start, pos_end, "Illegal character", details)
 
 
 class InvalidSyntaxError(Error):
-    def __init__(self, pos_start, pos_end, details=''):
-        super().__init__(pos_start, pos_end, 'Invalid syntax', details)
-
+    def __init__(self, pos_start, pos_end, details=""):
+        super().__init__(pos_start, pos_end, "Invalid syntax", details)
 
 
 class Position:
@@ -48,7 +46,7 @@ class Position:
         self.idx += 1
         self.col += 1
 
-        if current_char == '\n':
+        if current_char == "\n":
             self.ln += 1
             self.col = 0
 
@@ -72,8 +70,9 @@ class Token:
             self.pos_end = pos_end
 
     def __repr__(self):
-        if self.value: return f'{self.type}:{self.value}'
-        return f'{self.type}'
+        if self.value:
+            return f"{self.type}:{self.value}"
+        return f"{self.type}"
 
 
 class Lexer:
@@ -81,47 +80,50 @@ class Lexer:
         self.fn = fn
         self.text = text
         self.pos = Position(0, 0, 0, fn, text)
-        # restore previous position when parser encounters unexpected end of input
-        self.previous_pos = Position(0, 0, 0, fn, text)
         self.current_char = self.text[self.pos.idx]
 
-
     def advance(self):
-        self.previous_pos = self.pos.copy()
         self.pos.advance(self.current_char)
-        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
-
+        self.current_char = (
+            self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
+        )
 
     def get_next_token(self):
         while self.current_char != None:
-            if self.current_char in ' \t':
+            if self.current_char in " \t":
                 self.advance()
                 continue
 
-            if self.current_char == '+':
+            if self.current_char == "+":
+                token = Token(TT_PLUS, "+", self.pos)
                 self.advance()
-                return Token(TT_PLUS, '+', self.previous_pos)
+                return token
 
-            if self.current_char == '-':
+            if self.current_char == "-":
+                token = Token(TT_MINUS, "-", self.pos)
                 self.advance()
-                return Token(TT_MINUS, '-', self.previous_pos)
-                
-            if self.current_char == '*':
+                return token
+
+            if self.current_char == "*":
+                token = Token(TT_MUL, "*", self.pos)
                 self.advance()
-                return Token(TT_MUL, '*', self.previous_pos)
-                
-            if self.current_char == '/':
+                return token
+
+            if self.current_char == "/":
+                token = Token(TT_DIV, "/", self.pos)
                 self.advance()
-                return Token(TT_DIV, '/', self.previous_pos)
-                
-            if self.current_char == '(':
+                return token
+
+            if self.current_char == "(":
+                token = Token(TT_LPAREN, "(", self.pos)
                 self.advance()
-                return Token(TT_LPAREN, '(', self.previous_pos)
-                
-            if self.current_char == ')':
+                return token
+
+            if self.current_char == ")":
+                token = Token(TT_RPAREN, ")", self.pos)
                 self.advance()
-                return Token(TT_RPAREN, ')', self.previous_pos)
-                
+                return token
+
             if self.current_char in DIGITS:
                 number_token, error = self.make_number()
                 if error:
@@ -129,41 +131,39 @@ class Lexer:
                 return number_token
 
             pos_start = self.pos.copy()
-            self.previous_pos = pos_start
             invalid_char = self.current_char
             self.advance()
-            raise IllegalCharError(pos_start, self.pos, "'"+invalid_char+"'")
+            raise IllegalCharError(pos_start, self.pos, "'" + invalid_char + "'")
 
         return Token(TT_EOF, pos_start=self.pos)
 
     def make_number(self):
-        num_str = ''
+        num_str = ""
         dot_count = 0
         pos_start = self.pos.copy()
 
-        while self.current_char != None and self.current_char in DIGITS + '.':
-            if self.current_char == '.':
+        while self.current_char != None and self.current_char in DIGITS + ".":
+            if self.current_char == ".":
                 if dot_count == 1:
-                    #error: too many dots
+                    # error: too many dots
                     pos_start = self.pos.copy()
                     self.advance()
                     return None, InvalidSyntaxError(pos_start, self.pos)
                 elif len(num_str) == 0:
-                    #error: leading dot
+                    # error: leading dot
                     pos_start = self.pos.copy()
                     self.advance()
                     return None, InvalidSyntaxError(pos_start, self.pos)
                 else:
                     dot_count += 1
-                    num_str += '.'
+                    num_str += "."
             else:
                 num_str += self.current_char
             self.advance()
 
-        if num_str[-1] == '.':
-            #error: trailing dot
+        if num_str[-1] == ".":
+            # error: trailing dot
             pos_start = self.pos.copy()
             self.advance()
             return None, InvalidSyntaxError(pos_start, self.pos)
-        return Token(TT_NUMBER, float(num_str), pos_start), None
-
+        return Token(TT_NUMBER, float(num_str), pos_start, self.pos), None
