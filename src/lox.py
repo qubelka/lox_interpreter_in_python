@@ -10,9 +10,10 @@ TT_MUL = 'MUL'
 TT_DIV = 'DIV'
 TT_LPAREN = 'LPAREN'
 TT_RPAREN = 'RPAREN'
+TT_EOF = 'EOF'
 
 
-class Error:
+class Error(Exception):
     def __init__(self, pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
         self.pos_end = pos_end
@@ -23,7 +24,6 @@ class Error:
         result = f'{self.error_name}: {self.details}\n'
         result += f'File {self.pos_start.fn}, line {self.pos_start.ln+1}'
         return result
-
 
 class IllegalCharError(Error):
     def __init__(self, pos_start, pos_end, details):
@@ -44,7 +44,7 @@ class Position:
         self.fn = fn
         self.ftxt = ftxt
 
-    def advance(self, current_char):
+    def advance(self, current_char=None):
         self.idx += 1
         self.col += 1
 
@@ -59,9 +59,17 @@ class Position:
 
 
 class Token:
-    def __init__(self, type, value=None):
+    def __init__(self, type, value=None, pos_start=None, pos_end=None):
         self.type = type
         self.value = value
+
+        if pos_start:
+            self.pos_start = pos_start.copy()
+            self.pos_end = pos_start.copy()
+            self.pos_end.advance()
+
+        if pos_end:
+            self.pos_end = pos_end
 
     def __repr__(self):
         if self.value: return f'{self.type}:{self.value}'
@@ -72,52 +80,66 @@ class Lexer:
     def __init__(self, fn, text):
         self.fn = fn
         self.text = text
-        self.pos = Position(-1, 0, -1, fn, text)
-        self.current_char = None
-        self.advance()
+        self.pos = Position(0, 0, 0, fn, text)
+        # restore previous position when parser encounters unexpected end of input
+        self.previous_pos = Position(0, 0, 0, fn, text)
+        self.current_char = self.text[self.pos.idx]
+
 
     def advance(self):
+        self.previous_pos = self.pos.copy()
         self.pos.advance(self.current_char)
         self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
-    def make_tokens(self):
-        tokens = []
+
+    def get_next_token(self):
         while self.current_char != None:
             if self.current_char in ' \t':
                 self.advance()
-            elif self.current_char == '+':
-                tokens.append(Token(TT_PLUS))
-                self.advance()
-            elif self.current_char == '-':
-                tokens.append(Token(TT_MINUS))
-                self.advance()
-            elif self.current_char == '*':
-                tokens.append(Token(TT_MUL))
-                self.advance()
-            elif self.current_char == '/':
-                tokens.append(Token(TT_DIV))
-                self.advance()
-            elif self.current_char == '(':
-                tokens.append(Token(TT_LPAREN))
-                self.advance()
-            elif self.current_char == ')':
-                tokens.append(Token(TT_RPAREN))
-                self.advance()
-            elif self.current_char in DIGITS:
-                number, error = self.make_number()
-                if error: return [], error
-                tokens.append(number)
-            else:
-                pos_start = self.pos.copy()
-                invalid_char = self.current_char
-                self.advance()
-                return [], IllegalCharError(pos_start, self.pos, "'"+invalid_char+"'")
+                continue
 
-        return tokens, None
+            if self.current_char == '+':
+                self.advance()
+                return Token(TT_PLUS, '+', self.previous_pos)
+
+            if self.current_char == '-':
+                self.advance()
+                return Token(TT_MINUS, '-', self.previous_pos)
+                
+            if self.current_char == '*':
+                self.advance()
+                return Token(TT_MUL, '*', self.previous_pos)
+                
+            if self.current_char == '/':
+                self.advance()
+                return Token(TT_DIV, '/', self.previous_pos)
+                
+            if self.current_char == '(':
+                self.advance()
+                return Token(TT_LPAREN, '(', self.previous_pos)
+                
+            if self.current_char == ')':
+                self.advance()
+                return Token(TT_RPAREN, ')', self.previous_pos)
+                
+            if self.current_char in DIGITS:
+                number_token, error = self.make_number()
+                if error:
+                    raise error
+                return number_token
+
+            pos_start = self.pos.copy()
+            self.previous_pos = pos_start
+            invalid_char = self.current_char
+            self.advance()
+            raise IllegalCharError(pos_start, self.pos, "'"+invalid_char+"'")
+
+        return Token(TT_EOF, pos_start=self.pos)
 
     def make_number(self):
         num_str = ''
         dot_count = 0
+        pos_start = self.pos.copy()
 
         while self.current_char != None and self.current_char in DIGITS + '.':
             if self.current_char == '.':
@@ -143,15 +165,5 @@ class Lexer:
             pos_start = self.pos.copy()
             self.advance()
             return None, InvalidSyntaxError(pos_start, self.pos)
-
-        return Token(TT_NUMBER, float(num_str)), None
-
-
-def run(file, text):
-    lexer = Lexer(file, text)
-    tokens, error = lexer.make_tokens()
-    return tokens, error
-
-
-
+        return Token(TT_NUMBER, float(num_str), pos_start), None
 

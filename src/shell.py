@@ -1,10 +1,16 @@
-import lox
+from lox import Lexer
+from parser import Parser
 
 while True:
-    text = input('> ')
-    result, error = lox.run('<stdin>', text)
-
-    if error: 
-        print(error.as_string())
-    else:
+    try: 
+        text = input('> ')
+        if not text:
+            continue
+        lexer = Lexer('<stdin>', text)
+        parser = Parser(lexer)
+        result = parser.parse()
         print(result)
+    except EOFError:
+        break
+    except Exception as e:
+        print(e.as_string())
