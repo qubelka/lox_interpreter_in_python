@@ -19,8 +19,10 @@ class Error(Exception):
         self.details = details
 
     def as_string(self):
-        result = f"{self.error_name}: {self.details}\n"
-        result += f"File {self.pos_start.fn}, line {self.pos_start.ln+1}"
+        error_prefix = f"   {self.pos_start.ln+1} | "
+        result = f"{self.error_name}: {self.details}\n\n"
+        result += f"{error_prefix}{self.pos_start.ftxt}\n"
+        result += " " * len(error_prefix) + " " * self.pos_start.idx + "^"
         return result
 
 
