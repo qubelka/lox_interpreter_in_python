@@ -1,5 +1,6 @@
 from lox import Lexer
 from parser import Parser
+from interpreter import Interpreter
 
 while True:
     try:
@@ -8,7 +9,8 @@ while True:
             continue
         lexer = Lexer("<stdin>", text)
         parser = Parser(lexer)
-        result = parser.parse()
+        interpreter = Interpreter(parser)
+        result = interpreter.interpret()
         print(result)
     except EOFError:
         break
