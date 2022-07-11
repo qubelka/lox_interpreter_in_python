@@ -1,4 +1,8 @@
+import string
+
 DIGITS = "1234567890"
+LETTERS = string.ascii_letters
+LETTERS_DIGITS = LETTERS + DIGITS
 
 # Token types
 TT_NUMBER = "NUMBER"
@@ -9,6 +13,10 @@ TT_DIV = "DIV"
 TT_LPAREN = "LPAREN"
 TT_RPAREN = "RPAREN"
 TT_EOF = "EOF"
+TT_KEYWORD = "KEYWORD"
+TT_SEMI = "SEMI"
+
+KEYWORDS = ["print"]
 
 
 class Error(Exception):
@@ -76,6 +84,9 @@ class Token:
         if pos_end:
             self.pos_end = pos_end
 
+    def matches(self, type_, value):
+        return self.type == type_ and self.value == value
+
     def __repr__(self):
         if self.value:
             return f"{self.type}:{self.value}"
@@ -131,11 +142,22 @@ class Lexer:
                 self.advance()
                 return token
 
+            if self.current_char == ";":
+                token = Token(TT_SEMI, ";", self.pos)
+                self.advance()
+                return token
+
             if self.current_char in DIGITS:
                 number_token, error = self.make_number()
                 if error:
                     raise error
                 return number_token
+
+            if self.current_char in LETTERS:
+                token, error = self.make_identifier()
+                if error:
+                    raise error
+                return token
 
             pos_start = self.pos.copy()
             invalid_char = self.current_char
@@ -174,3 +196,15 @@ class Lexer:
             self.advance()
             return None, InvalidSyntaxError(pos_start, self.pos)
         return Token(TT_NUMBER, float(num_str), pos_start, self.pos), None
+
+    def make_identifier(self):
+        id_str = ""
+        pos_start = self.pos.copy()
+
+        while self.current_char != None and self.current_char in LETTERS_DIGITS + "_":
+            id_str += self.current_char
+            self.advance()
+
+        if id_str in KEYWORDS:
+            return Token(TT_KEYWORD, id_str, pos_start, self.pos), None
+        return None, InvalidSyntaxError(pos_start, self.pos)

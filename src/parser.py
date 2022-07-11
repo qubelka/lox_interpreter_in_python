@@ -1,5 +1,6 @@
 from lox import (
     TT_DIV,
+    TT_KEYWORD,
     TT_MINUS,
     TT_MUL,
     TT_NUMBER,
@@ -7,6 +8,7 @@ from lox import (
     TT_LPAREN,
     TT_RPAREN,
     TT_EOF,
+    TT_SEMI,
 )
 from lox import IllegalCharError, InvalidSyntaxError
 
@@ -41,6 +43,18 @@ class Num(AST):
 
     def __repr__(self):
         return f"{self.token}"
+
+
+class Stmt(object):
+    pass
+
+
+class Print(Stmt):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def __repr__(self):
+        return f"{self.expr}"
 
 
 class Parser(object):
@@ -113,8 +127,24 @@ class Parser(object):
 
         return node
 
-    def parse(self):
+    def statement(self):
+        if self.current_token.matches(TT_KEYWORD, "print"):
+            self.eat(TT_KEYWORD)
+            node = self.expr()
+            if self.current_token.type == TT_SEMI:
+                self.eat(TT_SEMI)
+                return Print(expr=node)
+            else:
+                raise InvalidSyntaxError(
+                    self.current_token.pos_start,
+                    self.current_token.pos_end,
+                    "Expected ';' after value.",
+                )
         node = self.expr()
+        return node
+
+    def parse(self):
+        node = self.statement()
         if self.current_token.type != TT_EOF:
             raise InvalidSyntaxError(
                 self.current_token.pos_start,

@@ -11,7 +11,14 @@ while True:
         parser = Parser(lexer)
         interpreter = Interpreter(parser)
         result = interpreter.interpret()
-        print(result)
+        """
+        REPL accepts statements or expressions:
+        statement -> printStmt;
+        printStmt -> "print" expression ";";
+        expression -> term;
+        """
+        if result: 
+            print(result)
     except EOFError:
         break
     except Exception as e:
