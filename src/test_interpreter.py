@@ -2,13 +2,15 @@ import unittest
 from lox import Lexer, RTError, InvalidSyntaxError
 from parser import Parser
 from interpreter import Interpreter
+from environment import Environment
 
 
 class TestInterpreter(unittest.TestCase):
     def makeInterpreter(self, text):
+        environment = Environment()
         lexer = Lexer("stdin", text)
         parser = Parser(lexer)
-        interpreter = Interpreter(parser)
+        interpreter = Interpreter(parser, environment)
         return interpreter
 
     def test_expression0(self):

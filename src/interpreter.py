@@ -17,9 +17,11 @@ class NodeVisitor(object):
     def generic_visit(self, node):
         raise Exception(f"No visit_{type(node).__name__} method")
 
+
 class Interpreter(NodeVisitor):
-    def __init__(self, parser):
+    def __init__(self, parser, environment):
         self.parser = parser
+        self.environment = environment
 
     def visit_BinOp(self, node):
         if node.op.type == TT_PLUS:
@@ -45,10 +47,20 @@ class Interpreter(NodeVisitor):
         if op == TT_MINUS:
             return -self.visit(node.expr)
 
-    def visit_Print(self, node):
+    def visit_PrintStmt(self, node):
         result = self.visit(node.expr)
         print(result)
         return None
+
+    def visit_VarStmt(self, stmt):
+        value = None
+        if stmt.expr:
+            value = self.visit(stmt.expr)
+        self.environment[stmt.token.value] = value
+        return None
+
+    def visit_Identifier(self, node):
+        return self.environment.get(node.token.pos_start, node.token.pos_end, node.name)
 
     def interpret(self):
         tree = self.parser.parse()

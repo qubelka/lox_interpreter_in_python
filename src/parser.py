@@ -1,5 +1,6 @@
 from lox import (
     TT_DIV,
+    TT_EQ,
     TT_KEYWORD,
     TT_MINUS,
     TT_MUL,
@@ -9,6 +10,7 @@ from lox import (
     TT_RPAREN,
     TT_EOF,
     TT_SEMI,
+    TT_IDENTIFIER,
 )
 from lox import IllegalCharError, InvalidSyntaxError
 
@@ -44,12 +46,20 @@ class Num(AST):
     def __repr__(self):
         return f"{self.token}"
 
+class Identifier(AST):
+    def __init__(self, token):
+        self.token = token
+        self.name = token.value
+
+    def __repr__(self):
+        return f"{self.token}"
+
 
 class Stmt(object):
     pass
 
 
-class Print(Stmt):
+class PrintStmt(Stmt):
     def __init__(self, expr):
         self.expr = expr
 
@@ -57,19 +67,28 @@ class Print(Stmt):
         return f"{self.expr}"
 
 
+class VarStmt(Stmt):
+    def __init__(self, token, expr):
+        self.token = token
+        self.expr = expr
+
+    def __repr__(self):
+        return f"{self.token}, {self.expr}"
+
+
 class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
         self.current_token = self.lexer.get_next_token()
 
-    def eat(self, token_type):
+    def eat(self, token_type, error="Unexpected token"):
         if self.current_token.type == token_type:
             self.current_token = self.lexer.get_next_token()
         else:
             raise InvalidSyntaxError(
                 self.current_token.pos_start,
                 self.current_token.pos_end,
-                "Unexpected token",
+                error,
             )
 
     def factor(self):
@@ -93,6 +112,10 @@ class Parser(object):
                     self.current_token.pos_end,
                     "Expected ')'",
                 )
+        elif token.type == TT_IDENTIFIER:
+            identifier = self.current_token
+            self.eat(TT_IDENTIFIER)
+            return Identifier(identifier)
         else:
             raise InvalidSyntaxError(
                 self.current_token.pos_start,
@@ -130,21 +153,34 @@ class Parser(object):
     def statement(self):
         if self.current_token.matches(TT_KEYWORD, "print"):
             self.eat(TT_KEYWORD)
-            node = self.expr()
-            if self.current_token.type == TT_SEMI:
-                self.eat(TT_SEMI)
-                return Print(expr=node)
-            else:
-                raise InvalidSyntaxError(
-                    self.current_token.pos_start,
-                    self.current_token.pos_end,
-                    "Expected ';' after value.",
-                )
+            expr = self.expr()
+            self.eat(TT_SEMI, "Expected ';' after value.")
+            return PrintStmt(expr)
         node = self.expr()
         return node
 
+    def var_decl(self):
+        token = self.current_token
+        self.eat(TT_IDENTIFIER, "Expected variable name.")
+        expr = None
+        if self.current_token.type == TT_EQ:
+            self.eat(TT_EQ)
+            expr = self.expr()
+        self.eat(TT_SEMI, "Expected ';' after expression.")
+        return VarStmt(token, expr)
+
+    def declaration(self):
+        if self.current_token.matches(TT_KEYWORD, "var"):
+            self.eat(TT_KEYWORD)
+            return self.var_decl()
+        else:
+            return self.statement()
+
+    def program(self):
+        return self.declaration()
+
     def parse(self):
-        node = self.statement()
+        node = self.program()
         if self.current_token.type != TT_EOF:
             raise InvalidSyntaxError(
                 self.current_token.pos_start,

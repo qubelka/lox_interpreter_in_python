@@ -10,13 +10,15 @@ TT_PLUS = "PLUS"
 TT_MINUS = "MINUS"
 TT_MUL = "MUL"
 TT_DIV = "DIV"
+TT_EQ = "EQ"
 TT_LPAREN = "LPAREN"
 TT_RPAREN = "RPAREN"
 TT_EOF = "EOF"
 TT_KEYWORD = "KEYWORD"
 TT_SEMI = "SEMI"
+TT_IDENTIFIER = "IDENTIFIER"
 
-KEYWORDS = ["print"]
+KEYWORDS = ["print", "var"]
 
 
 class Error(Exception):
@@ -147,6 +149,11 @@ class Lexer:
                 self.advance()
                 return token
 
+            if self.current_char == "=":
+                token = Token(TT_EQ, "=", self.pos)
+                self.advance()
+                return token
+
             if self.current_char in DIGITS:
                 number_token, error = self.make_number()
                 if error:
@@ -154,9 +161,7 @@ class Lexer:
                 return number_token
 
             if self.current_char in LETTERS:
-                token, error = self.make_identifier()
-                if error:
-                    raise error
+                token = self.make_identifier()
                 return token
 
             pos_start = self.pos.copy()
@@ -205,6 +210,5 @@ class Lexer:
             id_str += self.current_char
             self.advance()
 
-        if id_str in KEYWORDS:
-            return Token(TT_KEYWORD, id_str, pos_start, self.pos), None
-        return None, InvalidSyntaxError(pos_start, self.pos)
+        tok_type = TT_KEYWORD if id_str in KEYWORDS else TT_IDENTIFIER
+        return Token(tok_type, id_str, pos_start, self.pos)
