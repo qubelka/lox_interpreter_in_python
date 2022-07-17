@@ -59,6 +59,14 @@ class Interpreter(NodeVisitor):
         self.environment[stmt.token.value] = value
         return None
 
+    def visit_Assign(self, node):
+        var_name = node.left.name
+        if var_name in self.environment.values:
+            value = self.visit(node.right)
+            self.environment[var_name] = value
+            return value
+        raise RTError(node.left.token.pos_start, node.token.pos_end, f"Undefined variable '{var_name}'")
+
     def visit_Identifier(self, node):
         return self.environment.get(node.token.pos_start, node.token.pos_end, node.name)
 

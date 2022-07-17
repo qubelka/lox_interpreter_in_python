@@ -38,6 +38,16 @@ class UnaryOp(AST):
         return f"{self.token}, {self.expr}"
 
 
+class Assign(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.token = self.op = op
+        self.right = right
+
+    def __repr__(self):
+        return f"{self.left}, {self.op}, {self.right}"
+
+
 class Num(AST):
     def __init__(self, token):
         self.token = token
@@ -150,13 +160,24 @@ class Parser(object):
 
         return node
 
+    def assignment(self):
+        expr = self.expr()
+        if (self.current_token.type == TT_EQ):
+            op = self.current_token
+            self.eat(TT_EQ)
+            value = self.assignment()
+            if expr.token.type == TT_IDENTIFIER:
+                return Assign(expr, op, value)
+            raise InvalidSyntaxError(op.pos_start, op.pos_end, "Invalid assignment target")
+        self.eat(TT_SEMI, "Expected ';' after expression.")
+        return expr
+
     def statement(self):
         if self.current_token.matches(TT_KEYWORD, "print"):
             self.eat(TT_KEYWORD)
-            expr = self.expr()
-            self.eat(TT_SEMI, "Expected ';' after value.")
+            expr = self.assignment()
             return PrintStmt(expr)
-        node = self.expr()
+        node = self.assignment()
         return node
 
     def var_decl(self):
