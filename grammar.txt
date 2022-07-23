@@ -1,0 +1,18 @@
+
+program     -> declaration* EOF;
+
+declaration -> "var" var_decl | statement;
+
+var_decl    -> IDENTIFIER ("=" expr)? ";";
+
+statement   -> "print" assignment | block | assignment;
+
+assignment  -> IDENTIFIER "=" assignment | expr ";";
+
+block       -> "{" declaration* "}";
+
+expr        -> term (("+"|"-") term)*;
+
+term        -> factor (("*"|"/") factor)*;
+
+factor      -> "-" factor | NUMBER | "(" expr ")" | IDENTIFIER;
