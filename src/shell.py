@@ -1,3 +1,4 @@
+import sys
 from lox import Lexer
 from parser import Parser
 from interpreter import Interpreter
@@ -7,7 +8,13 @@ environment = Environment()
 
 while True:
     try:
-        text = input("> ")
+        repl = True
+        text = None
+        if len(sys.argv) > 1:
+            repl = False
+            text = open(sys.argv[1], 'r').read()
+        else:
+            text = input("> ")
         if not text:
             continue
         lexer = Lexer("<stdin>", text)
@@ -20,9 +27,14 @@ while True:
         printStmt -> "print" expression ";";
         expression -> term;
         """
+        if not repl:
+            break
         if result:
             print(result)
+
     except EOFError:
         break
     except Exception as e:
         print(e.as_string())
+        if not repl:
+            break

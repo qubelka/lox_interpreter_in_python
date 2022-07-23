@@ -2,11 +2,13 @@ from lox import (
     TT_DIV,
     TT_EQ,
     TT_KEYWORD,
+    TT_LBRACE,
     TT_MINUS,
     TT_MUL,
     TT_NUMBER,
     TT_PLUS,
     TT_LPAREN,
+    TT_RBRACE,
     TT_RPAREN,
     TT_EOF,
     TT_SEMI,
@@ -85,6 +87,9 @@ class VarStmt(Stmt):
     def __repr__(self):
         return f"{self.token}, {self.expr}"
 
+class Block(Stmt):
+    def __init__(self, statements):
+        self.statements = statements
 
 class Parser(object):
     def __init__(self, lexer):
@@ -160,6 +165,15 @@ class Parser(object):
 
         return node
 
+    def block(self):
+        self.eat(TT_LBRACE)
+        statements = []
+        while self.current_token.type not in (TT_RBRACE, TT_EOF):
+            node = self.declaration()
+            statements.append(node)
+        self.eat(TT_RBRACE, "Expected '}'")
+        return statements
+
     def assignment(self):
         expr = self.expr()
         if (self.current_token.type == TT_EQ):
@@ -177,6 +191,8 @@ class Parser(object):
             self.eat(TT_KEYWORD)
             expr = self.assignment()
             return PrintStmt(expr)
+        elif self.current_token.type == TT_LBRACE:
+            return Block(self.block())
         node = self.assignment()
         return node
 
@@ -198,7 +214,11 @@ class Parser(object):
             return self.statement()
 
     def program(self):
-        return self.declaration()
+        declarations = []
+        while self.current_token.type != TT_EOF:
+            declaration = self.declaration()
+            declarations.append(declaration)
+        return declarations
 
     def parse(self):
         node = self.program()

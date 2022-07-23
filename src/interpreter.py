@@ -1,3 +1,4 @@
+from environment import Environment
 from lox import (
     TT_PLUS,
     TT_MINUS,
@@ -56,16 +57,21 @@ class Interpreter(NodeVisitor):
         value = None
         if stmt.expr:
             value = self.visit(stmt.expr)
-        self.environment[stmt.token.value] = value
+        self.environment.define(stmt.token.value, value)
         return None
+
+    def visit_Block(self, node):
+        previous_env = self.environment
+        self.environment = Environment(previous_env)
+        for stmt in node.statements:
+            self.visit(stmt)
+        self.environment = previous_env
 
     def visit_Assign(self, node):
         var_name = node.left.name
-        if var_name in self.environment.values:
-            value = self.visit(node.right)
-            self.environment[var_name] = value
-            return value
-        raise RTError(node.left.token.pos_start, node.token.pos_end, f"Undefined variable '{var_name}'")
+        value = self.visit(node.right)
+        self.environment.assign(var_name, value, node.left.token.pos_start, node.left.token.pos_end)
+        return value
 
     def visit_Identifier(self, node):
         return self.environment.get(node.token.pos_start, node.token.pos_end, node.name)
@@ -74,4 +80,6 @@ class Interpreter(NodeVisitor):
         tree = self.parser.parse()
         if tree is None:
             return ""
-        return self.visit(tree)
+        for node in tree:
+            result = self.visit(node)
+        return result

@@ -13,6 +13,8 @@ TT_DIV = "DIV"
 TT_EQ = "EQ"
 TT_LPAREN = "LPAREN"
 TT_RPAREN = "RPAREN"
+TT_LBRACE = "LBRACE"
+TT_RBRACE = "RBRACE"
 TT_EOF = "EOF"
 TT_KEYWORD = "KEYWORD"
 TT_SEMI = "SEMI"
@@ -110,7 +112,7 @@ class Lexer:
 
     def get_next_token(self):
         while self.current_char != None:
-            if self.current_char in " \t":
+            if self.current_char in " \t\n":
                 self.advance()
                 continue
 
@@ -141,6 +143,16 @@ class Lexer:
 
             if self.current_char == ")":
                 token = Token(TT_RPAREN, ")", self.pos)
+                self.advance()
+                return token
+
+            if self.current_char == "{":
+                token = Token(TT_LBRACE, "{", self.pos)
+                self.advance()
+                return token
+
+            if self.current_char == "}":
+                token = Token(TT_RBRACE, "}", self.pos)
                 self.advance()
                 return token
 
