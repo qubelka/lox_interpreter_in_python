@@ -78,8 +78,8 @@ class Interpreter(NodeVisitor):
 
     def interpret(self):
         tree = self.parser.parse()
-        if tree is None:
-            return ""
+        if not tree:
+            return None
         for node in tree:
             result = self.visit(node)
         return result
