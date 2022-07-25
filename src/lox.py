@@ -31,10 +31,12 @@ class Error(Exception):
         self.details = details
 
     def as_string(self):
+        input_as_rows = self.pos_start.ftxt.split("\n")
+        row_with_error = input_as_rows[self.pos_start.ln]
         error_prefix = f"   {self.pos_start.ln+1} | "
         result = f"{self.error_name}: {self.details}\n\n"
-        result += f"{error_prefix}{self.pos_start.ftxt}\n"
-        result += " " * len(error_prefix) + " " * self.pos_start.idx + "^"
+        result += f"{error_prefix}{row_with_error}\n"
+        result += " " * len(error_prefix) + " " * self.pos_start.row_length + "^"
         return result
 
 
@@ -54,25 +56,28 @@ class RTError(Error):
 
 
 class Position:
-    def __init__(self, idx, ln, col, fn, ftxt):
+    def __init__(self, idx, ln, col, fn, ftxt, row_length):
         self.idx = idx
         self.ln = ln
         self.col = col
         self.fn = fn
         self.ftxt = ftxt
+        self.row_length = row_length
 
     def advance(self, current_char=None):
         self.idx += 1
         self.col += 1
+        self.row_length += 1
 
         if current_char == "\n":
             self.ln += 1
             self.col = 0
+            self.row_length = 0
 
         return self
 
     def copy(self):
-        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
+        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt, self.row_length)
 
 
 class Token:
@@ -101,7 +106,7 @@ class Lexer:
     def __init__(self, fn, text):
         self.fn = fn
         self.text = text
-        self.pos = Position(0, 0, 0, fn, text)
+        self.pos = Position(0, 0, 0, fn, text, 0)
         self.current_char = self.text[self.pos.idx]
 
     def advance(self):
