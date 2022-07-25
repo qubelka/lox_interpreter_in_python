@@ -21,12 +21,6 @@ while True:
         parser = Parser(lexer)
         interpreter = Interpreter(parser, environment)
         result = interpreter.interpret()
-        """
-        REPL accepts statements or expressions:
-        statement -> printStmt;
-        printStmt -> "print" expression ";";
-        expression -> term;
-        """
         if not repl:
             break
         if result:
