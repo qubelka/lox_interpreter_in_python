@@ -23,7 +23,7 @@ while True:
         result = interpreter.interpret()
         if not repl:
             break
-        if result:
+        if result is not None:
             print(result)
 
     except EOFError:
