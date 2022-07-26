@@ -79,7 +79,7 @@ class Interpreter(NodeVisitor):
         var_name = node.left.value
         value = self.visit(node.right)
         self.environment.assign(var_name, value, node.left.token.pos_start, node.left.token.pos_end)
-        return None
+        return value
 
     def visit_Identifier(self, node):
         return self.environment.get(node.token.pos_start, node.token.pos_end, node.value)
