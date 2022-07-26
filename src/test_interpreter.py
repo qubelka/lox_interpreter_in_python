@@ -1,4 +1,6 @@
+from io import StringIO
 import unittest
+from unittest.mock import patch
 from lox import Lexer, RTError, InvalidSyntaxError
 from parser import Parser
 from interpreter import Interpreter
@@ -179,6 +181,112 @@ class TestInterpreter(unittest.TestCase):
     def test_expression_invalid_syntax6(self):
         interpreter = self.makeInterpreter("(1 + 1;")
         with self.assertRaises(InvalidSyntaxError):
+            interpreter.interpret()
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_variable_declaration1(self, mock_stdout):
+        text = """
+        var a = 1;
+        print a;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_variable_declaration2(self, mock_stdout):
+        text = """
+        var a = 1;
+        var b = -1;
+        print a * b;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "-1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_variable_declaration3(self, mock_stdout):
+        text = """
+        var a;
+        print a;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "nil\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_variable_declaration4(self, mock_stdout):
+        text = """
+        var a = nil;
+        print a;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "nil\n")
+
+    def test_variable_declaration_errors1(self):
+        interpreter = self.makeInterpreter("var a")
+        with self.assertRaises(InvalidSyntaxError):
+            interpreter.interpret()
+
+    def test_variable_declaration_errors2(self):
+        interpreter = self.makeInterpreter("a;")
+        with self.assertRaises(RTError):
+            interpreter.interpret()
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_variable_assignment1(self, mock_stdout):
+        text = """
+        var a;
+        print a;
+        a = 1;
+        print a;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "nil\n1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_scope1(self, mock_stdout):
+        text = """
+        var a = 1;
+        {
+            var b = -1;
+            print a * b;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "-1.0\n")
+
+    def test_scope_errors1(self):
+        text = """
+        var a = 1;
+        {
+            var b = -1;
+        }
+        print a * b;
+        """
+        interpreter = self.makeInterpreter(text)
+        with self.assertRaises(RTError):
+            interpreter.interpret()
+
+    def test_arithmetic_ops_errors1(self):
+        text = """
+        var a;
+        var b = 1;
+        print a + b;
+        """
+        interpreter = self.makeInterpreter(text)
+        with self.assertRaises(RTError):
+            interpreter.interpret()
+
+    def test_arithmetic_ops_errors2(self):
+        text = """
+        print 1 + nil;
+        """
+        interpreter = self.makeInterpreter(text)
+        with self.assertRaises(RTError):
             interpreter.interpret()
 
 
