@@ -18,4 +18,4 @@ operator -> "+" | "-" | "*" | "/";
 ### Sources
 - [Make your own programming language](https://www.youtube.com/watch?v=Eythq9848Fg&list=PLZQftyCk7_SdoVexSmwy_tBgs7P0b97yD&index=4&ab_channel=CodePulse), David Callanan
 - [Let's build a simple interpreter](https://ruslanspivak.com/lsbasi-part1), Ruslan Spivak
-- [Crafting Interpreters](https://craftinginterpreters.com), Bob Nystrom
+- [Crafting Interpreters](https://craftinginterpreters.com), Robert Nystrom
