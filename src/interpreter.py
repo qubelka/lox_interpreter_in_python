@@ -25,22 +25,30 @@ class Interpreter(NodeVisitor):
         self.environment = environment
 
     def visit_BinOp(self, node):
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+        pos_start = node.token.pos_start
+        pos_end = node.token.pos_end
+
+        if not isinstance(left, float) or not isinstance(right, float):
+            raise RTError(pos_start, pos_end, f"Can apply arithmetic operations only to numbers.")
+
         if node.op.type == TT_PLUS:
-            return self.visit(node.left) + self.visit(node.right)
+            return left + right
         elif node.op.type == TT_MINUS:
-            return self.visit(node.left) - self.visit(node.right)
+            return left - right
         elif node.op.type == TT_MUL:
-            return self.visit(node.left) * self.visit(node.right)
+            return left * right
         elif node.op.type == TT_DIV:
-            right = self.visit(node.right)
             if right == 0:
-                pos_start = node.token.pos_start
-                pos_end = node.token.pos_end
                 raise RTError(pos_start, pos_end, "Division by zero")
             else:
-                return self.visit(node.left) / right
+                return left / right
 
     def visit_Num(self, node):
+        return node.value
+
+    def visit_Nil(self, node):
         return node.value
 
     def visit_UnaryOp(self, node):
@@ -54,7 +62,7 @@ class Interpreter(NodeVisitor):
         return None
 
     def visit_VarStmt(self, stmt):
-        value = None
+        value = "nil"
         if stmt.expr:
             value = self.visit(stmt.expr)
         self.environment.define(stmt.token.value, value)
@@ -68,13 +76,13 @@ class Interpreter(NodeVisitor):
         self.environment = previous_env
 
     def visit_Assign(self, node):
-        var_name = node.left.name
+        var_name = node.left.value
         value = self.visit(node.right)
         self.environment.assign(var_name, value, node.left.token.pos_start, node.left.token.pos_end)
-        return value
+        return None
 
     def visit_Identifier(self, node):
-        return self.environment.get(node.token.pos_start, node.token.pos_end, node.name)
+        return self.environment.get(node.token.pos_start, node.token.pos_end, node.value)
 
     def interpret(self):
         tree = self.parser.parse()

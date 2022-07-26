@@ -15,4 +15,4 @@ expr        -> term (("+"|"-") term)*;
 
 term        -> factor (("*"|"/") factor)*;
 
-factor      -> "-" factor | NUMBER | "(" expr ")" | IDENTIFIER;
+factor      -> "-" factor | NUMBER | "(" expr ")" | IDENTIFIER | "nil";

@@ -40,6 +40,19 @@ class UnaryOp(AST):
         return f"{self.token}, {self.expr}"
 
 
+class Factor(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+    def __repr__(self):
+        return f"{self.token}"
+
+class Nil(Factor):
+    def __init__(self, token):
+        super().__init__(token)
+        
+
 class Assign(AST):
     def __init__(self, left, op, right):
         self.left = left
@@ -50,21 +63,13 @@ class Assign(AST):
         return f"{self.left}, {self.op}, {self.right}"
 
 
-class Num(AST):
+class Num(Factor):
     def __init__(self, token):
-        self.token = token
-        self.value = token.value
+        super().__init__(token)
 
-    def __repr__(self):
-        return f"{self.token}"
-
-class Identifier(AST):
+class Identifier(Factor):
     def __init__(self, token):
-        self.token = token
-        self.name = token.value
-
-    def __repr__(self):
-        return f"{self.token}"
+        super().__init__(token)
 
 
 class Stmt(object):
@@ -128,9 +133,11 @@ class Parser(object):
                     "Expected ')'",
                 )
         elif token.type == TT_IDENTIFIER:
-            identifier = self.current_token
             self.eat(TT_IDENTIFIER)
-            return Identifier(identifier)
+            return Identifier(token)
+        elif token.matches(TT_KEYWORD, "nil"):
+            self.eat(TT_KEYWORD)
+            return Nil(token)
         else:
             raise InvalidSyntaxError(
                 self.current_token.pos_start,
