@@ -51,6 +51,10 @@ class Factor(AST):
 class Nil(Factor):
     def __init__(self, token):
         super().__init__(token)
+
+class Boolean(Factor):
+    def __init__(self, token):
+        super().__init__(token)
         
 
 class Assign(AST):
@@ -138,6 +142,9 @@ class Parser(object):
         elif token.matches(TT_KEYWORD, "nil"):
             self.eat(TT_KEYWORD)
             return Nil(token)
+        elif token.matches(TT_KEYWORD, "true") or token.matches(TT_KEYWORD, "false"):
+            self.eat(TT_KEYWORD)
+            return Boolean(token)
         else:
             raise InvalidSyntaxError(
                 self.current_token.pos_start,

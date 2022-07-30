@@ -20,7 +20,7 @@ TT_KEYWORD = "KEYWORD"
 TT_SEMI = "SEMI"
 TT_IDENTIFIER = "IDENTIFIER"
 
-KEYWORDS = ["print", "var", "nil"]
+KEYWORDS = ["print", "var", "nil", "true", "false"]
 
 
 class Error(Exception):

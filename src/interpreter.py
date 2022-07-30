@@ -24,6 +24,11 @@ class Interpreter(NodeVisitor):
         self.parser = parser
         self.environment = environment
 
+    def is_truthy(self, value):
+        if value == None or value == "nil" or value == "false":
+            return False
+        return True
+
     def visit_BinOp(self, node):
         left = self.visit(node.left)
         right = self.visit(node.right)
@@ -49,6 +54,9 @@ class Interpreter(NodeVisitor):
         return node.value
 
     def visit_Nil(self, node):
+        return node.value
+
+    def visit_Boolean(self, node):
         return node.value
 
     def visit_UnaryOp(self, node):
