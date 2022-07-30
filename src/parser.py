@@ -100,6 +100,16 @@ class Block(Stmt):
     def __init__(self, statements):
         self.statements = statements
 
+class IfStmt(Stmt):
+    def __init__(self, condition, then_stmt, else_stmt):
+        self.condition = condition
+        self.then_stmt = then_stmt
+        self.else_stmt = else_stmt
+
+    def __repr__(self):
+        return f"{self.condition}, {self.then_stmt}, {self.else_stmt}"
+
+
 class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
@@ -200,6 +210,17 @@ class Parser(object):
         self.eat(TT_SEMI, "Expected ';' after expression.")
         return expr
 
+    def if_stmt(self):
+        self.eat(TT_LPAREN)
+        condition = self.expr()
+        self.eat(TT_RPAREN)
+        then_stmt = self.statement()
+        else_stmt = None
+        if self.current_token.matches(TT_KEYWORD, "else"):
+            self.eat(TT_KEYWORD)
+            else_stmt = self.statement()
+        return IfStmt(condition, then_stmt, else_stmt)
+
     def statement(self):
         if self.current_token.matches(TT_KEYWORD, "print"):
             self.eat(TT_KEYWORD)
@@ -207,6 +228,9 @@ class Parser(object):
             return PrintStmt(expr)
         elif self.current_token.type == TT_LBRACE:
             return Block(self.block())
+        elif self.current_token.matches(TT_KEYWORD, "if"):
+            self.eat(TT_KEYWORD)
+            return self.if_stmt()
         node = self.assignment()
         return node
 

@@ -76,6 +76,14 @@ class Interpreter(NodeVisitor):
         self.environment.define(stmt.token.value, value)
         return None
 
+    def visit_IfStmt(self, node):
+        condition = self.visit(node.condition)
+        if self.is_truthy(condition):
+            self.visit(node.then_stmt)
+        elif node.else_stmt is not None:
+          self.visit(node.else_stmt)
+        return None
+
     def visit_Block(self, node):
         previous_env = self.environment
         self.environment = Environment(previous_env)

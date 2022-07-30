@@ -4,11 +4,13 @@ declaration -> "var" var_decl | statement;
 
 var_decl    -> IDENTIFIER ("=" expr)? ";";
 
-statement   -> "print" assignment | block | assignment;
-
-assignment  -> IDENTIFIER "=" assignment | expr ";";
+statement   -> "print" assignment | block | ifstmt | assignment;
 
 block       -> "{" declaration* "}";
+
+ifstmt      -> "if" "(" expr ")" statement ("else" statement)?;
+
+assignment  -> IDENTIFIER "=" assignment | expr ";";
 
 expr        -> term (("+"|"-") term)*;
 
