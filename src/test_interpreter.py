@@ -289,6 +289,61 @@ class TestInterpreter(unittest.TestCase):
         with self.assertRaises(RTError):
             interpreter.interpret()
 
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_if_stmt1(self, mock_stdout):
+        text = """
+        var x;
+        if (true) {
+            x = 1;
+        } else {
+            x = 2;
+        }
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_if_stmt2(self, mock_stdout):
+        text = """
+        var x;
+        if (false) {
+            x = 1;
+        } else {
+            x = 2;
+        }
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "2.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_if_stmt3(self, mock_stdout):
+        text = """
+        var x;
+        if (true) {
+            x = 1;
+        }
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_if_stmt4(self, mock_stdout):
+        text = """
+        var x;
+        if (false) {
+            x = 1;
+        }
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "nil\n")
 
 if __name__ == "__main__":
     unittest.main()
