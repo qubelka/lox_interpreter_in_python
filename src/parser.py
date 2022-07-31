@@ -114,14 +114,19 @@ class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
         self.current_token = self.lexer.get_next_token()
+        self.previous_token = self.current_token
 
-    def eat(self, token_type, error="Unexpected token"):
+    def eat(self, token_type, pos_start=None, pos_end=None, error="Unexpected token"):
         if self.current_token.type == token_type:
+            self.previous_token = self.current_token
             self.current_token = self.lexer.get_next_token()
         else:
+            if not pos_start or not pos_end:
+                pos_start = self.current_token.pos_start
+                pos_end = self.current_token.pos_end
             raise InvalidSyntaxError(
-                self.current_token.pos_start,
-                self.current_token.pos_end,
+                pos_start,
+                pos_end,
                 error,
             )
 
@@ -207,7 +212,7 @@ class Parser(object):
             if expr.token.type == TT_IDENTIFIER:
                 return Assign(expr, op, value)
             raise InvalidSyntaxError(op.pos_start, op.pos_end, "Invalid assignment target")
-        self.eat(TT_SEMI, "Expected ';' after expression.")
+        self.eat(TT_SEMI, self.previous_token.pos_start, self.previous_token.pos_end, "Expected ';' after expression.")
         return expr
 
     def if_stmt(self):
@@ -241,7 +246,7 @@ class Parser(object):
         if self.current_token.type == TT_EQ:
             self.eat(TT_EQ)
             expr = self.expr()
-        self.eat(TT_SEMI, "Expected ';' after expression.")
+        self.eat(TT_SEMI, self.previous_token.pos_start, self.previous_token.pos_end, "Expected ';' after expression.")
         return VarStmt(token, expr)
 
     def declaration(self):
