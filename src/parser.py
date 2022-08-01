@@ -14,8 +14,9 @@ from lox import (
     TT_SEMI,
     TT_IDENTIFIER,
     TT_STRING,
+    ErrorDetails,
 )
-from lox import IllegalCharError, InvalidSyntaxError
+from lox import InvalidSyntaxError
 
 
 class AST(object):
@@ -127,7 +128,7 @@ class Parser(object):
         self.current_token = self.lexer.get_next_token()
         self.previous_token = self.current_token
 
-    def eat(self, token_type, pos_start=None, pos_end=None, error="Unexpected token"):
+    def eat(self, token_type, pos_start=None, pos_end=None, error=ErrorDetails.UNEXPECTED_TOKEN):
         if self.current_token.type == token_type:
             self.previous_token = self.current_token
             self.current_token = self.lexer.get_next_token()
@@ -163,7 +164,7 @@ class Parser(object):
                 raise InvalidSyntaxError(
                     self.current_token.pos_start,
                     self.current_token.pos_end,
-                    "Expected ')'",
+                    ErrorDetails.EXPECTED_RPAREN,
                 )
         elif token.type == TT_IDENTIFIER:
             self.eat(TT_IDENTIFIER)
@@ -178,7 +179,7 @@ class Parser(object):
             raise InvalidSyntaxError(
                 self.current_token.pos_start,
                 self.current_token.pos_end,
-                "Expected number",
+                ErrorDetails.EXPECTED_NUMBER,
             )
 
     def term(self):
@@ -214,7 +215,7 @@ class Parser(object):
         while self.current_token.type not in (TT_RBRACE, TT_EOF):
             node = self.declaration()
             statements.append(node)
-        self.eat(TT_RBRACE, "Expected '}'")
+        self.eat(TT_RBRACE, ErrorDetails.EXPECTED_RBRACE)
         return statements
 
     def assignment(self):
@@ -226,14 +227,14 @@ class Parser(object):
             if expr.token.type == TT_IDENTIFIER:
                 return Assign(expr, op, value)
             raise InvalidSyntaxError(
-                op.pos_start, op.pos_end, "Invalid assignment target"
+                op.pos_start, op.pos_end, ErrorDetails.INVALID_ASSIGNMENT_TARGET
             )
 
         self.eat(
             TT_SEMI,
             self.previous_token.pos_start,
             self.previous_token.pos_end,
-            "Expected ';' after expression.",
+            ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION,
         )
         return expr
 
@@ -263,7 +264,7 @@ class Parser(object):
 
     def var_decl(self):
         token = self.current_token
-        self.eat(TT_IDENTIFIER, "Expected variable name.")
+        self.eat(TT_IDENTIFIER, ErrorDetails.EXPRECTED_VARIABLE_NAME)
         expr = None
         if self.current_token.type == TT_EQ:
             self.eat(TT_EQ)
@@ -272,7 +273,7 @@ class Parser(object):
             TT_SEMI,
             self.previous_token.pos_start,
             self.previous_token.pos_end,
-            "Expected ';' after expression.",
+            ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION,
         )
         return VarStmt(token, expr)
 
@@ -296,6 +297,6 @@ class Parser(object):
             raise InvalidSyntaxError(
                 self.current_token.pos_start,
                 self.current_token.pos_end,
-                "Expected '+', '-', '*' or '/'",
+                ErrorDetails.EXPECTED_ARITHMETIC_OPERATOR,
             )
         return node

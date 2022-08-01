@@ -1,3 +1,4 @@
+from enum import Enum
 import string
 
 DIGITS = "1234567890"
@@ -24,6 +25,26 @@ TT_IDENTIFIER = "IDENTIFIER"
 KEYWORDS = ["print", "var", "nil", "true", "false", "if", "else"]
 
 
+class ErrorDetails(Enum):
+    DIVISION_BY_ZERO = "Division by zero"
+    CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS = (
+        "Can apply arithmetic operations only to numbers"
+    )
+    UNTERMINATED_STRING = "Unterminated string"
+    UNEXPECTED_TOKEN = "Unexpected token"
+    INVALID_ASSIGNMENT_TARGET = "Invalid assignment target"
+    EXPECTED_SEMICOLON_AFTER_EXPRESSION = "Expected ';' after expression"
+    EXPRECTED_VARIABLE_NAME = "Expected variable name"
+    EXPECTED_NUMBER = "Expected number"
+    EXPECTED_RPAREN = "Expected ')'"
+    EXPECTED_RBRACE = "Expected '}'"
+    EXPECTED_ARITHMETIC_OPERATOR = "Expected '+', '-', '*' or '/'"
+    TRAILING_DOT = "Trailing dot"
+    LEADING_DOT = "Leading dot"
+    TOO_MANY_DOTS = "Too many dots"
+    UNDEFINED_VARIABLE = "Undefined variable"
+
+
 class Error(Exception):
     def __init__(self, pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
@@ -35,7 +56,7 @@ class Error(Exception):
         input_as_rows = self.pos_start.ftxt.split("\n")
         row_with_error = input_as_rows[self.pos_start.ln]
         error_prefix = f"   {self.pos_start.ln+1} | "
-        result = f"{self.error_name}: {self.details}\n\n"
+        result = f"{self.error_name}: {self.details.value if isinstance(self.details, ErrorDetails) else self.details}\n\n"
         result += f"{error_prefix}{row_with_error}\n"
         result += " " * len(error_prefix) + " " * self.pos_start.row_length + "^"
         return result
@@ -206,12 +227,16 @@ class Lexer:
                     # error: too many dots
                     pos_start = self.pos.copy()
                     self.advance()
-                    return None, InvalidSyntaxError(pos_start, self.pos)
+                    return None, InvalidSyntaxError(
+                        pos_start, self.pos, ErrorDetails.TOO_MANY_DOTS
+                    )
                 elif len(num_str) == 0:
                     # error: leading dot
                     pos_start = self.pos.copy()
                     self.advance()
-                    return None, InvalidSyntaxError(pos_start, self.pos)
+                    return None, InvalidSyntaxError(
+                        pos_start, self.pos, ErrorDetails.LEADING_DOT
+                    )
                 else:
                     dot_count += 1
                     num_str += "."
@@ -223,7 +248,9 @@ class Lexer:
             # error: trailing dot
             pos_start = self.pos.copy()
             self.advance()
-            return None, InvalidSyntaxError(pos_start, self.pos)
+            return None, InvalidSyntaxError(
+                pos_start, self.pos, ErrorDetails.TRAILING_DOT
+            )
         return Token(TT_NUMBER, float(num_str), pos_start, self.pos), None
 
     def make_identifier(self):
@@ -244,9 +271,11 @@ class Lexer:
 
         if self.current_char is None:
             pos_start = self.pos.copy()
-            raise InvalidSyntaxError(pos_start, self.pos, "Unterminated string.")
+            raise InvalidSyntaxError(
+                pos_start, self.pos, ErrorDetails.UNTERMINATED_STRING
+            )
 
         self.advance()
         return Token(
-            TT_STRING, self.text[pos_start.idx : self.pos.idx-1], pos_start, self.pos
+            TT_STRING, self.text[pos_start.idx : self.pos.idx - 1], pos_start, self.pos
         )

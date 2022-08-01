@@ -3,7 +3,8 @@ from lox import (
     TT_PLUS,
     TT_MINUS,
     TT_MUL,
-    TT_DIV
+    TT_DIV,
+    ErrorDetails
 )
 
 from lox import RTError
@@ -36,7 +37,7 @@ class Interpreter(NodeVisitor):
         pos_end = node.token.pos_end
 
         if not isinstance(left, float) or not isinstance(right, float):
-            raise RTError(pos_start, pos_end, f"Can apply arithmetic operations only to numbers.")
+            raise RTError(pos_start, pos_end, ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS)
 
         if node.op.type == TT_PLUS:
             return left + right
@@ -46,7 +47,7 @@ class Interpreter(NodeVisitor):
             return left * right
         elif node.op.type == TT_DIV:
             if right == 0:
-                raise RTError(pos_start, pos_end, "Division by zero")
+                raise RTError(pos_start, pos_end, ErrorDetails.DIVISION_BY_ZERO)
             else:
                 return left / right
 
@@ -68,7 +69,7 @@ class Interpreter(NodeVisitor):
             expr = node.expr
             result = self.visit(expr)
             if not isinstance(result, float):
-                raise RTError(expr.token.pos_start, expr.token.pos_end, f"Can apply arithmetic operations only to numbers.")
+                raise RTError(expr.token.pos_start, expr.token.pos_end, ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS)
             return -result
 
     def visit_PrintStmt(self, node):
