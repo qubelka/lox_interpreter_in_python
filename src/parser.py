@@ -1,6 +1,8 @@
 from lox import (
+    TT_BANG_EQUAL,
     TT_DIV,
     TT_EQ,
+    TT_EQUAL_EQUAL,
     TT_KEYWORD,
     TT_LBRACE,
     TT_MINUS,
@@ -128,7 +130,13 @@ class Parser(object):
         self.current_token = self.lexer.get_next_token()
         self.previous_token = self.current_token
 
-    def eat(self, token_type, pos_start=None, pos_end=None, error=ErrorDetails.UNEXPECTED_TOKEN):
+    def eat(
+        self,
+        token_type,
+        pos_start=None,
+        pos_end=None,
+        error=ErrorDetails.UNEXPECTED_TOKEN,
+    ):
         if self.current_token.type == token_type:
             self.previous_token = self.current_token
             self.current_token = self.lexer.get_next_token()
@@ -156,7 +164,7 @@ class Parser(object):
             return String(token)
         elif token.type == TT_LPAREN:
             self.eat(TT_LPAREN)
-            node = self.expr()
+            node = self.equality()
             if self.current_token.type == TT_RPAREN:
                 self.eat(TT_RPAREN)
                 return node
@@ -209,6 +217,22 @@ class Parser(object):
 
         return node
 
+    def comparison(self):
+        return self.expr()
+
+    def equality(self):
+        node = self.comparison()
+        while self.current_token.type in (TT_EQUAL_EQUAL, TT_BANG_EQUAL):
+            operator = self.current_token
+            if operator.type == TT_EQUAL_EQUAL:
+                self.eat(TT_EQUAL_EQUAL)
+            elif operator.type == TT_BANG_EQUAL:
+                self.eat(TT_BANG_EQUAL)
+
+            right = self.comparison()
+            node = BinOp(node, operator, right)
+        return node
+
     def block(self):
         self.eat(TT_LBRACE)
         statements = []
@@ -219,7 +243,7 @@ class Parser(object):
         return statements
 
     def assignment(self):
-        expr = self.expr()
+        expr = self.equality()
         if self.current_token.type == TT_EQ:
             op = self.current_token
             self.eat(TT_EQ)
@@ -240,7 +264,7 @@ class Parser(object):
 
     def if_stmt(self):
         self.eat(TT_LPAREN)
-        condition = self.expr()
+        condition = self.equality()
         self.eat(TT_RPAREN)
         then_stmt = self.statement()
         else_stmt = None
@@ -268,7 +292,7 @@ class Parser(object):
         expr = None
         if self.current_token.type == TT_EQ:
             self.eat(TT_EQ)
-            expr = self.expr()
+            expr = self.equality()
         self.eat(
             TT_SEMI,
             self.previous_token.pos_start,

@@ -1,5 +1,7 @@
 from environment import Environment
 from lox import (
+    TT_BANG_EQUAL,
+    TT_EQUAL_EQUAL,
     TT_PLUS,
     TT_MINUS,
     TT_MUL,
@@ -30,26 +32,66 @@ class Interpreter(NodeVisitor):
             return False
         return True
 
+    def check_types(self, pos_start, pos_end, v1, v2, equality_operation=False):
+        allowed_types = ["nil", "false", "true"]
+
+        if isinstance(v1, float):
+            if isinstance(v2, float):
+                return True
+            if equality_operation and v2 in allowed_types:
+                return True
+ 
+        if isinstance(v2, float):
+            if equality_operation and v1 in allowed_types:
+                return True
+
+        if isinstance(v1, str):
+            if isinstance(v2, str):
+                return True
+            if equality_operation and v2 in allowed_types:
+                return True
+            
+        if isinstance(v2, str):
+            if equality_operation and v1 in allowed_types:
+                return True
+        
+        if equality_operation and v1 in allowed_types and v2 in allowed_types:
+            return True
+        
+        raise RTError(pos_start, pos_end, ErrorDetails.BINARY_OPS_TYPE_ERROR)
+        
+
+
     def visit_BinOp(self, node):
         left = self.visit(node.left)
         right = self.visit(node.right)
         pos_start = node.token.pos_start
         pos_end = node.token.pos_end
 
-        if not isinstance(left, float) or not isinstance(right, float):
-            raise RTError(pos_start, pos_end, ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS)
-
         if node.op.type == TT_PLUS:
+            self.check_types(pos_start, pos_end, left, right)
             return left + right
-        elif node.op.type == TT_MINUS:
-            return left - right
-        elif node.op.type == TT_MUL:
-            return left * right
-        elif node.op.type == TT_DIV:
-            if right == 0:
-                raise RTError(pos_start, pos_end, ErrorDetails.DIVISION_BY_ZERO)
-            else:
-                return left / right
+
+        if node.op.type in (TT_MINUS, TT_MUL, TT_DIV):
+            if not isinstance(left, float) or not isinstance(right, float):
+                raise RTError(pos_start, pos_end, ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS)
+
+            if node.op.type == TT_MINUS:
+                return left - right
+            elif node.op.type == TT_MUL:
+                return left * right
+            elif node.op.type == TT_DIV:
+                if right == 0:
+                    raise RTError(pos_start, pos_end, ErrorDetails.DIVISION_BY_ZERO)
+                else:
+                    return left / right
+
+        self.check_types(pos_start, pos_end, left, right, True)
+
+        if node.op.type == TT_EQUAL_EQUAL:
+            return "true" if left == right else "false"
+        if node.op.type == TT_BANG_EQUAL:
+            return "true" if left != right else "false"
 
     def visit_Num(self, node):
         return node.value

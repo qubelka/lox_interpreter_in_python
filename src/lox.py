@@ -21,6 +21,13 @@ TT_EOF = "EOF"
 TT_KEYWORD = "KEYWORD"
 TT_SEMI = "SEMI"
 TT_IDENTIFIER = "IDENTIFIER"
+TT_BANG_EQUAL = "BANG_EQUAL"
+TT_BANG = "BANG"
+TT_LESS_EQUAL = "LESS_EQUAL"
+TT_LESS = "LESS"
+TT_GREATER_EQUAL = "GREATER_EQUAL"
+TT_GREATER = "GREATER"
+TT_EQUAL_EQUAL = "EQUAL_EQUAL"
 
 KEYWORDS = ["print", "var", "nil", "true", "false", "if", "else"]
 
@@ -43,6 +50,7 @@ class ErrorDetails(Enum):
     LEADING_DOT = "Leading dot"
     TOO_MANY_DOTS = "Too many dots"
     UNDEFINED_VARIABLE = "Undefined variable"
+    BINARY_OPS_TYPE_ERROR = "Can apply binary operations only to numbers, strings or booleans.\nThe operands must be of the same type."
 
 
 class Error(Exception):
@@ -202,6 +210,17 @@ class Lexer:
 
             if self.current_char == "=":
                 token = Token(TT_EQ, "=", self.pos)
+                if self.peek() == "=":
+                    self.advance()
+                    token = Token(TT_EQUAL_EQUAL, "==", self.pos)
+                self.advance()
+                return token
+
+            if self.current_char == "!":
+                token = Token(TT_BANG, "!", self.pos)
+                if self.peek() == "=":
+                    self.advance()
+                    token = Token(TT_BANG_EQUAL, "!=", self.pos)
                 self.advance()
                 return token
 
