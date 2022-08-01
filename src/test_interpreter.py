@@ -1,7 +1,7 @@
 from io import StringIO
 import unittest
 from unittest.mock import patch
-from lox import Lexer, RTError, InvalidSyntaxError
+from lox import Lexer, RTError, InvalidSyntaxError, ErrorDetails
 from parser import Parser
 from interpreter import Interpreter
 from environment import Environment
@@ -144,8 +144,9 @@ class TestInterpreter(unittest.TestCase):
 
     def test_expression_division_by_zero(self):
         interpreter = self.makeInterpreter("2 / 0;")
-        with self.assertRaises(RTError):
+        with self.assertRaises(RTError) as e:
             interpreter.interpret()
+        self.assertEqual(ErrorDetails.DIVISION_BY_ZERO, e.exception.args[2])
 
     def test_no_expression(self):
         interpreter = self.makeInterpreter("             ")
@@ -154,34 +155,41 @@ class TestInterpreter(unittest.TestCase):
 
     def test_expression_invalid_syntax1(self):
         interpreter = self.makeInterpreter("1 +")
-        with self.assertRaises(InvalidSyntaxError):
+        with self.assertRaises(InvalidSyntaxError) as e:
             interpreter.interpret()
+        self.assertEqual(ErrorDetails.EXPECTED_NUMBER, e.exception.args[2])
 
     def test_expression_invalid_syntax2(self):
-        # Prints wrong error msg --> update parser
         interpreter = self.makeInterpreter("1 1 1 -")
-        with self.assertRaises(InvalidSyntaxError):
+        with self.assertRaises(InvalidSyntaxError) as e:
             interpreter.interpret()
+        self.assertEqual(
+            ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION, e.exception.args[2]
+        )
 
     def test_expression_invalid_syntax3(self):
         interpreter = self.makeInterpreter("(")
-        with self.assertRaises(InvalidSyntaxError):
+        with self.assertRaises(InvalidSyntaxError) as e:
             interpreter.interpret()
+        self.assertEqual(ErrorDetails.EXPECTED_NUMBER, e.exception.args[2])
 
     def test_expression_invalid_syntax4(self):
         interpreter = self.makeInterpreter(")")
-        with self.assertRaises(InvalidSyntaxError):
+        with self.assertRaises(InvalidSyntaxError) as e:
             interpreter.interpret()
+        self.assertEqual(ErrorDetails.EXPECTED_NUMBER, e.exception.args[2])
 
     def test_expression_invalid_syntax5(self):
         interpreter = self.makeInterpreter("+6")
-        with self.assertRaises(InvalidSyntaxError):
+        with self.assertRaises(InvalidSyntaxError) as e:
             interpreter.interpret()
+        self.assertEqual(ErrorDetails.EXPECTED_NUMBER, e.exception.args[2])
 
     def test_expression_invalid_syntax6(self):
         interpreter = self.makeInterpreter("(1 + 1;")
-        with self.assertRaises(InvalidSyntaxError):
+        with self.assertRaises(InvalidSyntaxError) as e:
             interpreter.interpret()
+        self.assertEqual(ErrorDetails.EXPECTED_RPAREN, e.exception.args[2])
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_variable_declaration1(self, mock_stdout):
@@ -226,13 +234,19 @@ class TestInterpreter(unittest.TestCase):
 
     def test_variable_declaration_errors1(self):
         interpreter = self.makeInterpreter("var a")
-        with self.assertRaises(InvalidSyntaxError):
+        with self.assertRaises(InvalidSyntaxError) as e:
             interpreter.interpret()
+        self.assertEqual(
+            ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION, e.exception.args[2]
+        )
 
     def test_variable_declaration_errors2(self):
         interpreter = self.makeInterpreter("a;")
-        with self.assertRaises(RTError):
+        with self.assertRaises(RTError) as e:
             interpreter.interpret()
+        self.assertEqual(
+            f"{ErrorDetails.UNDEFINED_VARIABLE.value} 'a'", e.exception.args[2]
+        )
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_variable_assignment1(self, mock_stdout):
@@ -268,8 +282,11 @@ class TestInterpreter(unittest.TestCase):
         print a * b;
         """
         interpreter = self.makeInterpreter(text)
-        with self.assertRaises(RTError):
+        with self.assertRaises(RTError) as e:
             interpreter.interpret()
+        self.assertEqual(
+            f"{ErrorDetails.UNDEFINED_VARIABLE.value} 'b'", e.exception.args[2]
+        )
 
     def test_arithmetic_ops_errors1(self):
         text = """
@@ -278,16 +295,24 @@ class TestInterpreter(unittest.TestCase):
         print a + b;
         """
         interpreter = self.makeInterpreter(text)
-        with self.assertRaises(RTError):
+        with self.assertRaises(RTError) as e:
             interpreter.interpret()
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
 
     def test_arithmetic_ops_errors2(self):
         text = """
         print 1 + nil;
         """
         interpreter = self.makeInterpreter(text)
-        with self.assertRaises(RTError):
+        with self.assertRaises(RTError) as e:
             interpreter.interpret()
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_if_stmt1(self, mock_stdout):
@@ -344,6 +369,7 @@ class TestInterpreter(unittest.TestCase):
         interpreter = self.makeInterpreter(text)
         interpreter.interpret()
         self.assertEqual(mock_stdout.getvalue(), "nil\n")
+
 
 if __name__ == "__main__":
     unittest.main()
