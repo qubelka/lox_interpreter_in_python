@@ -6,6 +6,7 @@ LETTERS_DIGITS = LETTERS + DIGITS
 
 # Token types
 TT_NUMBER = "NUMBER"
+TT_STRING = "STRING"
 TT_PLUS = "PLUS"
 TT_MINUS = "MINUS"
 TT_MUL = "MUL"
@@ -77,7 +78,9 @@ class Position:
         return self
 
     def copy(self):
-        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt, self.row_length)
+        return Position(
+            self.idx, self.ln, self.col, self.fn, self.ftxt, self.row_length
+        )
 
 
 class Token:
@@ -171,6 +174,10 @@ class Lexer:
                 self.advance()
                 return token
 
+            if self.current_char == '"':
+                self.advance()
+                return self.make_string()
+
             if self.current_char in DIGITS:
                 number_token, error = self.make_number()
                 if error:
@@ -229,3 +236,17 @@ class Lexer:
 
         tok_type = TT_KEYWORD if id_str in KEYWORDS else TT_IDENTIFIER
         return Token(tok_type, id_str, pos_start, self.pos)
+
+    def make_string(self):
+        pos_start = self.pos.copy()
+        while self.current_char not in ['"', None]:
+            self.advance()
+
+        if self.current_char is None:
+            pos_start = self.pos.copy()
+            raise InvalidSyntaxError(pos_start, self.pos, "Unterminated string.")
+
+        self.advance()
+        return Token(
+            TT_STRING, self.text[pos_start.idx : self.pos.idx-1], pos_start, self.pos
+        )

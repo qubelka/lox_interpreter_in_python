@@ -13,6 +13,7 @@ from lox import (
     TT_EOF,
     TT_SEMI,
     TT_IDENTIFIER,
+    TT_STRING,
 )
 from lox import IllegalCharError, InvalidSyntaxError
 
@@ -48,14 +49,16 @@ class Factor(AST):
     def __repr__(self):
         return f"{self.token}"
 
+
 class Nil(Factor):
     def __init__(self, token):
         super().__init__(token)
 
+
 class Boolean(Factor):
     def __init__(self, token):
         super().__init__(token)
-        
+
 
 class Assign(AST):
     def __init__(self, left, op, right):
@@ -70,6 +73,12 @@ class Assign(AST):
 class Num(Factor):
     def __init__(self, token):
         super().__init__(token)
+
+
+class String(Factor):
+    def __init__(self, token):
+        super().__init__(token)
+
 
 class Identifier(Factor):
     def __init__(self, token):
@@ -96,9 +105,11 @@ class VarStmt(Stmt):
     def __repr__(self):
         return f"{self.token}, {self.expr}"
 
+
 class Block(Stmt):
     def __init__(self, statements):
         self.statements = statements
+
 
 class IfStmt(Stmt):
     def __init__(self, condition, then_stmt, else_stmt):
@@ -139,6 +150,9 @@ class Parser(object):
         elif token.type == TT_NUMBER:
             self.eat(TT_NUMBER)
             return Num(token)
+        elif token.type == TT_STRING:
+            self.eat(TT_STRING)
+            return String(token)
         elif token.type == TT_LPAREN:
             self.eat(TT_LPAREN)
             node = self.expr()
@@ -205,14 +219,22 @@ class Parser(object):
 
     def assignment(self):
         expr = self.expr()
-        if (self.current_token.type == TT_EQ):
+        if self.current_token.type == TT_EQ:
             op = self.current_token
             self.eat(TT_EQ)
             value = self.assignment()
             if expr.token.type == TT_IDENTIFIER:
                 return Assign(expr, op, value)
-            raise InvalidSyntaxError(op.pos_start, op.pos_end, "Invalid assignment target")
-        self.eat(TT_SEMI, self.previous_token.pos_start, self.previous_token.pos_end, "Expected ';' after expression.")
+            raise InvalidSyntaxError(
+                op.pos_start, op.pos_end, "Invalid assignment target"
+            )
+
+        self.eat(
+            TT_SEMI,
+            self.previous_token.pos_start,
+            self.previous_token.pos_end,
+            "Expected ';' after expression.",
+        )
         return expr
 
     def if_stmt(self):
@@ -246,7 +268,12 @@ class Parser(object):
         if self.current_token.type == TT_EQ:
             self.eat(TT_EQ)
             expr = self.expr()
-        self.eat(TT_SEMI, self.previous_token.pos_start, self.previous_token.pos_end, "Expected ';' after expression.")
+        self.eat(
+            TT_SEMI,
+            self.previous_token.pos_start,
+            self.previous_token.pos_end,
+            "Expected ';' after expression.",
+        )
         return VarStmt(token, expr)
 
     def declaration(self):

@@ -52,6 +52,9 @@ class Interpreter(NodeVisitor):
 
     def visit_Num(self, node):
         return node.value
+    
+    def visit_String(self, node):
+        return node.value
 
     def visit_Nil(self, node):
         return node.value
