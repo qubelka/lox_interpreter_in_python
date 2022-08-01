@@ -65,7 +65,11 @@ class Interpreter(NodeVisitor):
     def visit_UnaryOp(self, node):
         op = node.op.type
         if op == TT_MINUS:
-            return -self.visit(node.expr)
+            expr = node.expr
+            result = self.visit(expr)
+            if not isinstance(result, float):
+                raise RTError(expr.token.pos_start, expr.token.pos_end, f"Can apply arithmetic operations only to numbers.")
+            return -result
 
     def visit_PrintStmt(self, node):
         result = self.visit(node.expr)
