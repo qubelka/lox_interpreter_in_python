@@ -139,6 +139,11 @@ class Lexer:
             self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
         )
 
+    def peek(self):
+        return (
+            self.text[self.pos.idx + 1] if self.pos.idx + 1 < len(self.text) else None
+        )
+
     def get_next_token(self):
         while self.current_char != None:
             if self.current_char in " \t\n":
@@ -161,9 +166,14 @@ class Lexer:
                 return token
 
             if self.current_char == "/":
-                token = Token(TT_DIV, "/", self.pos)
-                self.advance()
-                return token
+                if self.peek() == "/":
+                    while self.current_char not in ["\n", None]:
+                        self.advance()
+                    continue
+                else:
+                    token = Token(TT_DIV, "/", self.pos)
+                    self.advance()
+                    return token
 
             if self.current_char == "(":
                 token = Token(TT_LPAREN, "(", self.pos)
