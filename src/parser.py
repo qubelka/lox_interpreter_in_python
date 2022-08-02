@@ -3,8 +3,12 @@ from lox import (
     TT_DIV,
     TT_EQ,
     TT_EQUAL_EQUAL,
+    TT_GREATER,
+    TT_GREATER_EQUAL,
     TT_KEYWORD,
     TT_LBRACE,
+    TT_LESS,
+    TT_LESS_EQUAL,
     TT_MINUS,
     TT_MUL,
     TT_NUMBER,
@@ -222,7 +226,21 @@ class Parser(object):
         return node
 
     def comparison(self):
-        return self.expr()
+        node = self.expr()
+        while self.current_token.type in (TT_GREATER, TT_GREATER_EQUAL, TT_LESS, TT_LESS_EQUAL):
+            operator = self.current_token
+            if operator.type == TT_GREATER:
+                self.eat(TT_GREATER)
+            elif operator.type == TT_GREATER_EQUAL:
+                self.eat(TT_GREATER_EQUAL)
+            elif operator.type == TT_LESS:
+                self.eat(TT_LESS)
+            elif operator.type == TT_LESS_EQUAL:
+                self.eat(TT_LESS_EQUAL)
+            
+            right = self.expr()
+            node = BinOp(node, operator, right)
+        return node
 
     def equality(self):
         node = self.comparison()

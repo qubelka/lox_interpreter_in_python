@@ -224,6 +224,22 @@ class Lexer:
                 self.advance()
                 return token
 
+            if self.current_char == "<":
+                token = Token(TT_LESS, "<", self.pos)
+                if self.peek() == "=":
+                    self.advance()
+                    token = Token(TT_LESS_EQUAL, "<=", self.pos)
+                self.advance()
+                return token
+
+            if self.current_char == ">":
+                token = Token(TT_GREATER, ">", self.pos)
+                if self.peek() == "=":
+                    self.advance()
+                    token = Token(TT_GREATER_EQUAL, ">=", self.pos)
+                self.advance()
+                return token
+
             if self.current_char == '"':
                 self.advance()
                 return self.make_string()
