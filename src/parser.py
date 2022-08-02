@@ -16,6 +16,7 @@ from lox import (
     TT_SEMI,
     TT_IDENTIFIER,
     TT_STRING,
+    TT_BANG,
     ErrorDetails,
 )
 from lox import InvalidSyntaxError
@@ -152,8 +153,11 @@ class Parser(object):
 
     def factor(self):
         token = self.current_token
-        if token.type == TT_MINUS:
-            self.eat(TT_MINUS)
+        if token.type in (TT_MINUS, TT_BANG):
+            if token.type == TT_MINUS:
+                self.eat(TT_MINUS)
+            else:
+                self.eat(TT_BANG)
             node = UnaryOp(token, self.factor())
             return node
         elif token.type == TT_NUMBER:

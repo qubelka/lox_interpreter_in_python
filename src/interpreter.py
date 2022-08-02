@@ -1,5 +1,6 @@
 from environment import Environment
 from lox import (
+    TT_BANG,
     TT_BANG_EQUAL,
     TT_EQUAL_EQUAL,
     TT_PLUS,
@@ -107,12 +108,14 @@ class Interpreter(NodeVisitor):
 
     def visit_UnaryOp(self, node):
         op = node.op.type
+        expr = node.expr
+        result = self.visit(expr)
         if op == TT_MINUS:
-            expr = node.expr
-            result = self.visit(expr)
             if not isinstance(result, float):
                 raise RTError(expr.token.pos_start, expr.token.pos_end, ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS)
             return -result
+        if op == TT_BANG:
+            return "true" if not self.is_truthy(result) else "false"
 
     def visit_PrintStmt(self, node):
         result = self.visit(node.expr)
