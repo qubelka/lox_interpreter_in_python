@@ -6,7 +6,9 @@ class Environment:
         self.values = dict()
         self.enclosing = enclosing
 
-    def define(self, name, value):
+    def define(self, name, value, pos_start, pos_end):
+        if name in self.values:
+            raise RTError(pos_start, pos_end, f"Variable '{name}' already defined")
         self.values[name] = value
 
     def assign(self, name, value, pos_start, pos_end):

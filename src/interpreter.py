@@ -123,7 +123,7 @@ class Interpreter(NodeVisitor):
         value = "nil"
         if stmt.expr:
             value = self.visit(stmt.expr)
-        self.environment.define(stmt.token.value, value)
+        self.environment.define(stmt.token.value, value, stmt.token.pos_start, stmt.token.pos_end)
         return None
 
     def visit_IfStmt(self, node):
