@@ -183,17 +183,17 @@ class TestInterpreter(unittest.TestCase):
         self.assertEqual(result, "false")
 
     def test_expression33(self):
-        interpreter = self.makeInterpreter('nil == 1;')
+        interpreter = self.makeInterpreter("nil == 1;")
         result = interpreter.interpret()
         self.assertEqual(result, "false")
-    
+
     def test_expression34(self):
         interpreter = self.makeInterpreter('"a" == true;')
         result = interpreter.interpret()
         self.assertEqual(result, "false")
 
     def test_expression34(self):
-        interpreter = self.makeInterpreter('false == -1;')
+        interpreter = self.makeInterpreter("false == -1;")
         result = interpreter.interpret()
         self.assertEqual(result, "false")
 
@@ -201,6 +201,36 @@ class TestInterpreter(unittest.TestCase):
         interpreter = self.makeInterpreter('"a" + "b";')
         result = interpreter.interpret()
         self.assertEqual(result, "ab")
+
+    def test_expression36(self):
+        interpreter = self.makeInterpreter("1 > 0;")
+        result = interpreter.interpret()
+        self.assertEqual(result, "true")
+
+    def test_expression37(self):
+        interpreter = self.makeInterpreter("0.1 >= 0;")
+        result = interpreter.interpret()
+        self.assertEqual(result, "true")
+
+    def test_expression38(self):
+        interpreter = self.makeInterpreter("1 < 1.1;")
+        result = interpreter.interpret()
+        self.assertEqual(result, "true")
+
+    def test_expression39(self):
+        interpreter = self.makeInterpreter("1 <= 1;")
+        result = interpreter.interpret()
+        self.assertEqual(result, "true")
+
+    def test_expression40(self):
+        interpreter = self.makeInterpreter("1 < 1;")
+        result = interpreter.interpret()
+        self.assertEqual(result, "false")
+
+    def test_expression41(self):
+        interpreter = self.makeInterpreter("1 > 1;")
+        result = interpreter.interpret()
+        self.assertEqual(result, "false")
 
     def test_expression_division_by_zero(self):
         interpreter = self.makeInterpreter("2 / 0;")
@@ -262,30 +292,66 @@ class TestInterpreter(unittest.TestCase):
         with self.assertRaises(RTError) as e:
             interpreter.interpret()
         self.assertEqual(ErrorDetails.BINARY_OPS_TYPE_ERROR, e.exception.args[2])
-    
+
     def test_expression_invalid_types3(self):
         interpreter = self.makeInterpreter('1 - "a";')
         with self.assertRaises(RTError) as e:
             interpreter.interpret()
-        self.assertEqual(ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS, e.exception.args[2])
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
 
     def test_expression_invalid_types3(self):
         interpreter = self.makeInterpreter('"a" * "b";')
         with self.assertRaises(RTError) as e:
             interpreter.interpret()
-        self.assertEqual(ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS, e.exception.args[2])
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
 
     def test_expression_invalid_types4(self):
-        interpreter = self.makeInterpreter('nil / 7;')
+        interpreter = self.makeInterpreter("nil / 7;")
         with self.assertRaises(RTError) as e:
             interpreter.interpret()
-        self.assertEqual(ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS, e.exception.args[2])
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
 
     def test_expression_invalid_types5(self):
         interpreter = self.makeInterpreter('"a" + 1;')
         with self.assertRaises(RTError) as e:
             interpreter.interpret()
         self.assertEqual(ErrorDetails.BINARY_OPS_TYPE_ERROR, e.exception.args[2])
+
+    def test_expression_invalid_types6(self):
+        interpreter = self.makeInterpreter('"a" < 5;')
+        with self.assertRaises(RTError) as e:
+            interpreter.interpret()
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
+
+    def test_expression_invalid_types7(self):
+        interpreter = self.makeInterpreter("5 <= nil;")
+        with self.assertRaises(RTError) as e:
+            interpreter.interpret()
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
+
+    def test_expression_invalid_types8(self):
+        interpreter = self.makeInterpreter('"aa" > "a";')
+        with self.assertRaises(RTError) as e:
+            interpreter.interpret()
+        self.assertEqual(
+            ErrorDetails.CAN_APPLY_ARITHMETIC_OPERATIONS_ONLY_TO_NUMBERS,
+            e.exception.args[2],
+        )
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_variable_declaration1(self, mock_stdout):
@@ -343,6 +409,26 @@ class TestInterpreter(unittest.TestCase):
         self.assertEqual(
             f"{ErrorDetails.UNDEFINED_VARIABLE.value} 'a'", e.exception.args[2]
         )
+
+    def test_variable_declaration_errors3(self):
+        text = """
+        var a = 1;
+        var a = 2;
+        """
+        interpreter = self.makeInterpreter(text)
+        with self.assertRaises(RTError) as e:
+            interpreter.interpret()
+        self.assertEqual(f"Variable 'a' already defined", e.exception.args[2])
+
+    def test_variable_declaration_errors4(self):
+        text = """
+        var a;
+        var a = 2;
+        """
+        interpreter = self.makeInterpreter(text)
+        with self.assertRaises(RTError) as e:
+            interpreter.interpret()
+        self.assertEqual(f"Variable 'a' already defined", e.exception.args[2])
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_variable_assignment1(self, mock_stdout):
@@ -512,7 +598,63 @@ class TestInterpreter(unittest.TestCase):
         """
         interpreter = self.makeInterpreter(text)
         interpreter.interpret()
-        self.assertEqual(mock_stdout.getvalue(), "0.0\n")       
+        self.assertEqual(mock_stdout.getvalue(), "0.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_comparisons1(self, mock_stdout):
+        text = """
+        var a = true;
+        print !a;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "false\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_comparisons2(self, mock_stdout):
+        text = """
+        var a = true;
+        print a == true;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "true\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_comparisons3(self, mock_stdout):
+        text = """
+        var a = true;
+        print 1 == a;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "false\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_comparisons4(self, mock_stdout):
+        text = """
+        var a = 1;
+        var b = -1;
+        print a > b;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "true\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_comparisons5(self, mock_stdout):
+        text = """
+        var a = 1;
+        var b = -1;
+        if (a >= b) {
+            print "a is greater than b";
+        } else {
+            print "a is less than b";
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "a is greater than b\n")
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_comments1(self, mock_stdout):
@@ -526,7 +668,23 @@ class TestInterpreter(unittest.TestCase):
         """
         interpreter = self.makeInterpreter(text)
         interpreter.interpret()
-        self.assertEqual(mock_stdout.getvalue(), "true\n")   
+        self.assertEqual(mock_stdout.getvalue(), "true\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_multiline_strings1(self, mock_stdout):
+        text = """
+        var a = "
+                hello
+                world";
+
+        print a;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(
+            mock_stdout.getvalue(), "\n                hello\n                world\n"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
