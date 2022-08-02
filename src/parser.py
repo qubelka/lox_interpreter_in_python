@@ -164,7 +164,7 @@ class Parser(object):
             return String(token)
         elif token.type == TT_LPAREN:
             self.eat(TT_LPAREN)
-            node = self.equality()
+            node = self.expression()
             if self.current_token.type == TT_RPAREN:
                 self.eat(TT_RPAREN)
                 return node
@@ -242,8 +242,11 @@ class Parser(object):
         self.eat(TT_RBRACE, ErrorDetails.EXPECTED_RBRACE)
         return statements
 
+    def expression(self):
+        return self.equality()
+
     def assignment(self):
-        expr = self.equality()
+        expr = self.expression()
         if self.current_token.type == TT_EQ:
             op = self.current_token
             self.eat(TT_EQ)
@@ -253,18 +256,11 @@ class Parser(object):
             raise InvalidSyntaxError(
                 op.pos_start, op.pos_end, ErrorDetails.INVALID_ASSIGNMENT_TARGET
             )
-
-        self.eat(
-            TT_SEMI,
-            self.previous_token.pos_start,
-            self.previous_token.pos_end,
-            ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION,
-        )
         return expr
 
     def if_stmt(self):
         self.eat(TT_LPAREN)
-        condition = self.equality()
+        condition = self.expression()
         self.eat(TT_RPAREN)
         then_stmt = self.statement()
         else_stmt = None
@@ -273,18 +269,36 @@ class Parser(object):
             else_stmt = self.statement()
         return IfStmt(condition, then_stmt, else_stmt)
 
+    def print_stmt(self):
+        expr = self.expression()
+        self.eat(
+            TT_SEMI,
+            self.current_token.pos_start,
+            self.current_token.pos_end,
+            ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION,
+        )
+        return PrintStmt(expr)
+
+    def expression_stmt(self):
+        expr = self.assignment()
+        self.eat(
+            TT_SEMI,
+            self.current_token.pos_start,
+            self.current_token.pos_end,
+            ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION,
+        )
+        return expr
+
     def statement(self):
         if self.current_token.matches(TT_KEYWORD, "print"):
             self.eat(TT_KEYWORD)
-            expr = self.assignment()
-            return PrintStmt(expr)
+            return self.print_stmt()
         elif self.current_token.type == TT_LBRACE:
             return Block(self.block())
         elif self.current_token.matches(TT_KEYWORD, "if"):
             self.eat(TT_KEYWORD)
             return self.if_stmt()
-        node = self.assignment()
-        return node
+        return self.expression_stmt()
 
     def var_decl(self):
         token = self.current_token
@@ -292,7 +306,7 @@ class Parser(object):
         expr = None
         if self.current_token.type == TT_EQ:
             self.eat(TT_EQ)
-            expr = self.equality()
+            expr = self.expression()
         self.eat(
             TT_SEMI,
             self.previous_token.pos_start,
