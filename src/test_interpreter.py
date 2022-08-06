@@ -685,6 +685,116 @@ class TestInterpreter(unittest.TestCase):
             mock_stdout.getvalue(), "\n                hello\n                world\n"
         )
 
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical1(self, mock_stdout):
+        text = """
+        if (true and true) {
+            print 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical2(self, mock_stdout):
+        text = """
+        if (true and false) {
+            print 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical3(self, mock_stdout):
+        text = """
+        if (false and false) {
+            print 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical4(self, mock_stdout):
+        text = """
+        if (true or true) {
+            print 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical5(self, mock_stdout):
+        text = """
+        if (true or false) {
+            print 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical6(self, mock_stdout):
+        text = """
+        if (false or false) {
+            print 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical_short_circuit1(self, mock_stdout):
+        text = """
+        var x = 1;
+        true and (x = 2);
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "2.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical_short_circuit2(self, mock_stdout):
+        text = """
+        var x = 1;
+        false and (x = 2);
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical_short_circuit3(self, mock_stdout):
+        text = """
+        var x = 1;
+        true or (x = 2);
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_logical_short_circuit4(self, mock_stdout):
+        text = """
+        var x = 1;
+        false or (x = 2);
+        print x;
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "2.0\n")
+
 
 if __name__ == "__main__":
     unittest.main()
