@@ -49,6 +49,16 @@ class UnaryOp(AST):
         return f"{self.token}, {self.expr}"
 
 
+class Logical(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.token = self.op = op
+        self.right = right
+
+    def __repr__(self):
+        return f"({self.left}, {self.op}, {self.right})"
+
+
 class Factor(AST):
     def __init__(self, token):
         self.token = token
@@ -255,6 +265,24 @@ class Parser(object):
             node = BinOp(node, operator, right)
         return node
 
+    def logic_and(self):
+        node = self.equality()
+        while self.current_token.matches(TT_KEYWORD, "and"):
+            operator = self.current_token
+            self.eat(TT_KEYWORD)
+            right = self.equality()
+            node = Logical(node, operator, right)
+        return node
+
+    def logic_or(self):
+        node = self.logic_and()
+        while self.current_token.matches(TT_KEYWORD, "or"):
+            operator = self.current_token
+            self.eat(TT_KEYWORD)
+            right = self.logic_and()
+            node = Logical(node, operator, right)
+        return node
+
     def block(self):
         self.eat(TT_LBRACE)
         statements = []
@@ -268,7 +296,7 @@ class Parser(object):
         return self.assignment()
 
     def assignment(self):
-        expr = self.equality()
+        expr = self.logic_or()
         if self.current_token.type == TT_EQ:
             op = self.current_token
             self.eat(TT_EQ)

@@ -3,6 +3,7 @@ from lox import (
     TT_BANG,
     TT_BANG_EQUAL,
     TT_EQUAL_EQUAL,
+    TT_KEYWORD,
     TT_LESS,
     TT_LESS_EQUAL,
     TT_PLUS,
@@ -142,6 +143,16 @@ class Interpreter(NodeVisitor):
             return -result
         if op == TT_BANG:
             return "true" if not self.is_truthy(result) else "false"
+
+    def visit_Logical(self, node):
+        left = self.visit(node.left)
+        if node.op.matches(TT_KEYWORD, "or"):
+            if self.is_truthy(left):
+                return left
+        else:
+            if not self.is_truthy(left):
+                return left
+        return self.visit(node.right)
 
     def visit_PrintStmt(self, node):
         result = self.visit(node.expr)
