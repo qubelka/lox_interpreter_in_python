@@ -1,21 +1,23 @@
 
 program         -> declaration* EOF;
 
-declaration     -> "var" var_decl | statement;
+declaration     -> var_decl | statement;
 
-var_decl        -> IDENTIFIER ("=" expression)? ";";
+var_decl        -> "var" IDENTIFIER ("=" expression)? ";";
 
 statement       -> print_stmt | block | ifstmt | expression_stmt;
 
-expression_stmt -> assignment ";";
+print_stmt      -> "print" expression ";";
+
+expression_stmt -> expression ";";
 
 block           -> "{" declaration* "}";
 
 ifstmt          -> "if" "(" expression ")" statement ("else" statement)?;
 
-assignment      -> IDENTIFIER "=" assignment | expression;
+expression      -> assignment;
 
-expression      -> equality;
+assignment      -> IDENTIFIER "=" assignment | equality;
 
 equality        -> comparison ( ( "!=" | "==" ) comparison )* ;
 
@@ -25,4 +27,4 @@ expr            -> term (("+"|"-") term)*;
 
 term            -> factor (("*"|"/") factor)*;
 
-factor          -> "-" factor | NUMBER | STRING | "(" expression ")" | IDENTIFIER | "nil" | "true" | "false";
+factor          -> "-" factor | "!" factor | NUMBER | STRING | "(" expression ")" | IDENTIFIER | "nil" | "true" | "false";

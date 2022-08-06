@@ -265,10 +265,10 @@ class Parser(object):
         return statements
 
     def expression(self):
-        return self.equality()
+        return self.assignment()
 
     def assignment(self):
-        expr = self.expression()
+        expr = self.equality()
         if self.current_token.type == TT_EQ:
             op = self.current_token
             self.eat(TT_EQ)
@@ -302,7 +302,7 @@ class Parser(object):
         return PrintStmt(expr)
 
     def expression_stmt(self):
-        expr = self.assignment()
+        expr = self.expression()
         self.eat(
             TT_SEMI,
             self.current_token.pos_start,
