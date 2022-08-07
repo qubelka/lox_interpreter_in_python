@@ -795,6 +795,31 @@ class TestInterpreter(unittest.TestCase):
         interpreter.interpret()
         self.assertEqual(mock_stdout.getvalue(), "2.0\n")
 
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_while1(self, mock_stdout):
+        text = """
+        var x = 1;
+        while (x < 5) {
+            print x;
+            x = x + 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "1.0\n2.0\n3.0\n4.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_while2(self, mock_stdout):
+        text = """
+        var x = 1;
+        while (x < 1) {
+            print x;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "")
+
 
 if __name__ == "__main__":
     unittest.main()
