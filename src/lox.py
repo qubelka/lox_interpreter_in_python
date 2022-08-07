@@ -29,7 +29,7 @@ TT_GREATER_EQUAL = "GREATER_EQUAL"
 TT_GREATER = "GREATER"
 TT_EQUAL_EQUAL = "EQUAL_EQUAL"
 
-KEYWORDS = ["print", "var", "nil", "true", "false", "if", "else", "and", "or"]
+KEYWORDS = ["print", "var", "nil", "true", "false", "if", "else", "and", "or", "while"]
 
 
 class ErrorDetails(Enum):

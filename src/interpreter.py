@@ -176,6 +176,11 @@ class Interpreter(NodeVisitor):
             self.visit(node.else_stmt)
         return None
 
+    def visit_WhileStmt(self, node):
+        while self.is_truthy(self.visit(node.condition)):
+            self.visit(node.body)
+        return None
+
     def visit_Block(self, node):
         previous_env = self.environment
         self.environment = Environment(previous_env)

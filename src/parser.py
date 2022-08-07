@@ -138,6 +138,14 @@ class IfStmt(Stmt):
     def __repr__(self):
         return f"{self.condition}, {self.then_stmt}, {self.else_stmt}"
 
+class WhileStmt(Stmt):
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body
+
+    def __repr__(self):
+        return f"{self.condition}, {self.body}"
+
 
 class Parser(object):
     def __init__(self, lexer):
@@ -308,6 +316,13 @@ class Parser(object):
             )
         return expr
 
+    def while_stmt(self):
+        self.eat(TT_LPAREN)
+        condition = self.expression()
+        self.eat(TT_RPAREN)
+        body = self.statement()
+        return WhileStmt(condition, body)
+
     def if_stmt(self):
         self.eat(TT_LPAREN)
         condition = self.expression()
@@ -348,6 +363,9 @@ class Parser(object):
         elif self.current_token.matches(TT_KEYWORD, "if"):
             self.eat(TT_KEYWORD)
             return self.if_stmt()
+        elif self.current_token.matches(TT_KEYWORD, "while"):
+            self.eat(TT_KEYWORD)
+            return self.while_stmt()
         return self.expression_stmt()
 
     def var_decl(self):

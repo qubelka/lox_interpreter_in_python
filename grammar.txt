@@ -5,7 +5,7 @@ declaration     -> var_decl | statement;
 
 var_decl        -> "var" IDENTIFIER ("=" expression)? ";";
 
-statement       -> print_stmt | block | ifstmt | expression_stmt;
+statement       -> print_stmt | block | ifstmt | expression_stmt | while_stmt;
 
 print_stmt      -> "print" expression ";";
 
@@ -14,6 +14,8 @@ expression_stmt -> expression ";";
 block           -> "{" declaration* "}";
 
 ifstmt          -> "if" "(" expression ")" statement ("else" statement)?;
+
+while_stmt      -> "while" "(" expression ")" statement;
 
 expression      -> assignment;
 
