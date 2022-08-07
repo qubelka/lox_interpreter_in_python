@@ -820,6 +820,64 @@ class TestInterpreter(unittest.TestCase):
         interpreter.interpret()
         self.assertEqual(mock_stdout.getvalue(), "")
 
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_for1(self, mock_stdout):
+        text = """
+        for (var x = 0; x < 5; x = x + 1) {
+            print x;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "0.0\n1.0\n2.0\n3.0\n4.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_for2(self, mock_stdout):
+        text = """
+        for (var x = 0; x < 0; x = x + 1) {
+            print x;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_for3(self, mock_stdout):
+        text = """
+        var x = 0;
+        for (; x < 5; x = x + 1) {
+            print x;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "0.0\n1.0\n2.0\n3.0\n4.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_for4(self, mock_stdout):
+        text = """
+        for (var x = 0; x < 5;) {
+            print x;
+            x = x + 1;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "0.0\n1.0\n2.0\n3.0\n4.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_for5(self, mock_stdout):
+        text = """
+        var x;
+        for (x = 0; x < 5; x = x + 1) {
+            print x;
+        }
+        """
+        interpreter = self.makeInterpreter(text)
+        interpreter.interpret()
+        self.assertEqual(mock_stdout.getvalue(), "0.0\n1.0\n2.0\n3.0\n4.0\n")
+
 
 if __name__ == "__main__":
     unittest.main()
