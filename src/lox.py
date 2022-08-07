@@ -29,7 +29,7 @@ TT_GREATER_EQUAL = "GREATER_EQUAL"
 TT_GREATER = "GREATER"
 TT_EQUAL_EQUAL = "EQUAL_EQUAL"
 
-KEYWORDS = ["print", "var", "nil", "true", "false", "if", "else", "and", "or", "while"]
+KEYWORDS = ["print", "var", "nil", "true", "false", "if", "else", "and", "or", "while", "for"]
 
 
 class ErrorDetails(Enum):
@@ -43,6 +43,7 @@ class ErrorDetails(Enum):
     EXPECTED_SEMICOLON_AFTER_EXPRESSION = "Expected ';' after expression"
     EXPRECTED_VARIABLE_NAME = "Expected variable name"
     EXPECTED_NUMBER = "Expected number"
+    EXPECTED_LPAREN = "Expected '('"
     EXPECTED_RPAREN = "Expected ')'"
     EXPECTED_RBRACE = "Expected '}'"
     EXPECTED_ARITHMETIC_OPERATOR = "Expected '+', '-', '*' or '/'"

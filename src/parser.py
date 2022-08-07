@@ -22,6 +22,7 @@ from lox import (
     TT_STRING,
     TT_BANG,
     ErrorDetails,
+    Token,
 )
 from lox import InvalidSyntaxError
 
@@ -316,17 +317,52 @@ class Parser(object):
             )
         return expr
 
+    def for_stmt(self):
+        self.eat(TT_LPAREN, error=ErrorDetails.EXPECTED_LPAREN)
+        initializer = None
+        if self.current_token.type == TT_SEMI:
+            self.eat(TT_SEMI)
+        elif self.current_token.matches(TT_KEYWORD, "var"):
+            self.eat(TT_KEYWORD)
+            initializer = self.var_decl()
+        else:
+            initializer = self.expression_stmt()
+
+        condition = None
+        if self.current_token.type != TT_SEMI:
+            condition = self.expression()
+        self.eat(TT_SEMI)
+
+        increment = None
+        if self.current_token.type != TT_RPAREN:
+            increment = self.expression()
+        self.eat(TT_RPAREN, error=ErrorDetails.EXPECTED_RPAREN)
+
+        body = self.statement()
+
+        if increment is not None:
+            body = Block([body, increment])
+
+        if condition is None:
+            condition = Boolean(Token(TT_KEYWORD, "true"))
+        body = WhileStmt(condition, body)
+
+        if initializer is not None:
+            body = Block([initializer, body])
+
+        return body
+
     def while_stmt(self):
-        self.eat(TT_LPAREN)
+        self.eat(TT_LPAREN, error=ErrorDetails.EXPECTED_LPAREN)
         condition = self.expression()
-        self.eat(TT_RPAREN)
+        self.eat(TT_RPAREN, error=ErrorDetails.EXPECTED_RPAREN)
         body = self.statement()
         return WhileStmt(condition, body)
 
     def if_stmt(self):
-        self.eat(TT_LPAREN)
+        self.eat(TT_LPAREN, error=ErrorDetails.EXPECTED_LPAREN)
         condition = self.expression()
-        self.eat(TT_RPAREN)
+        self.eat(TT_RPAREN, error=ErrorDetails.EXPECTED_RPAREN)
         then_stmt = self.statement()
         else_stmt = None
         if self.current_token.matches(TT_KEYWORD, "else"):
@@ -366,6 +402,9 @@ class Parser(object):
         elif self.current_token.matches(TT_KEYWORD, "while"):
             self.eat(TT_KEYWORD)
             return self.while_stmt()
+        elif self.current_token.matches(TT_KEYWORD, "for"):
+            self.eat(TT_KEYWORD)
+            return self.for_stmt()
         return self.expression_stmt()
 
     def var_decl(self):
