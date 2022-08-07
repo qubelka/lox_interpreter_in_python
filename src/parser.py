@@ -338,8 +338,8 @@ class Parser(object):
         expr = self.expression()
         self.eat(
             TT_SEMI,
-            self.current_token.pos_start,
-            self.current_token.pos_end,
+            self.previous_token.pos_start,
+            self.previous_token.pos_end,
             ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION,
         )
         return PrintStmt(expr)
@@ -348,8 +348,8 @@ class Parser(object):
         expr = self.expression()
         self.eat(
             TT_SEMI,
-            self.current_token.pos_start,
-            self.current_token.pos_end,
+            self.previous_token.pos_start,
+            self.previous_token.pos_end,
             ErrorDetails.EXPECTED_SEMICOLON_AFTER_EXPRESSION,
         )
         return expr
