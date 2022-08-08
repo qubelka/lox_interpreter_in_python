@@ -60,7 +60,7 @@ class Logical(AST):
         return f"({self.left}, {self.op}, {self.right})"
 
 
-class Factor(AST):
+class Primary(AST):
     def __init__(self, token):
         self.token = token
         self.value = token.value
@@ -69,12 +69,12 @@ class Factor(AST):
         return f"{self.token}"
 
 
-class Nil(Factor):
+class Nil(Primary):
     def __init__(self, token):
         super().__init__(token)
 
 
-class Boolean(Factor):
+class Boolean(Primary):
     def __init__(self, token):
         super().__init__(token)
 
@@ -89,17 +89,17 @@ class Assign(AST):
         return f"{self.left}, {self.op}, {self.right}"
 
 
-class Num(Factor):
+class Num(Primary):
     def __init__(self, token):
         super().__init__(token)
 
 
-class String(Factor):
+class String(Primary):
     def __init__(self, token):
         super().__init__(token)
 
 
-class Identifier(Factor):
+class Identifier(Primary):
     def __init__(self, token):
         super().__init__(token)
 
@@ -174,16 +174,9 @@ class Parser(object):
                 error,
             )
 
-    def factor(self):
+    def primary(self):
         token = self.current_token
-        if token.type in (TT_MINUS, TT_BANG):
-            if token.type == TT_MINUS:
-                self.eat(TT_MINUS)
-            else:
-                self.eat(TT_BANG)
-            node = UnaryOp(token, self.factor())
-            return node
-        elif token.type == TT_NUMBER:
+        if token.type == TT_NUMBER:
             self.eat(TT_NUMBER)
             return Num(token)
         elif token.type == TT_STRING:
@@ -217,8 +210,18 @@ class Parser(object):
                 ErrorDetails.EXPECTED_NUMBER,
             )
 
-    def term(self):
-        node = self.factor()
+    def unary(self):
+        token = self.current_token
+        if token.type in (TT_MINUS, TT_BANG):
+            if token.type == TT_MINUS:
+                self.eat(TT_MINUS)
+            else:
+                self.eat(TT_BANG)
+            return UnaryOp(token, self.unary())
+        return self.primary()
+
+    def factor(self):
+        node = self.unary()
 
         while self.current_token.type in (TT_MUL, TT_DIV):
             token = self.current_token
@@ -227,12 +230,12 @@ class Parser(object):
             elif token.type == TT_DIV:
                 self.eat(TT_DIV)
 
-            node = BinOp(left=node, op=token, right=self.factor())
+            node = BinOp(left=node, op=token, right=self.unary())
 
         return node
 
-    def expr(self):
-        node = self.term()
+    def term(self):
+        node = self.factor()
         while self.current_token.type in (TT_PLUS, TT_MINUS):
             token = self.current_token
             if token.type == TT_PLUS:
@@ -240,12 +243,12 @@ class Parser(object):
             elif token.type == TT_MINUS:
                 self.eat(TT_MINUS)
 
-            node = BinOp(left=node, op=token, right=self.term())
+            node = BinOp(left=node, op=token, right=self.factor())
 
         return node
 
     def comparison(self):
-        node = self.expr()
+        node = self.term()
         while self.current_token.type in (TT_GREATER, TT_GREATER_EQUAL, TT_LESS, TT_LESS_EQUAL):
             operator = self.current_token
             if operator.type == TT_GREATER:
@@ -257,7 +260,7 @@ class Parser(object):
             elif operator.type == TT_LESS_EQUAL:
                 self.eat(TT_LESS_EQUAL)
             
-            right = self.expr()
+            right = self.term()
             node = BinOp(node, operator, right)
         return node
 

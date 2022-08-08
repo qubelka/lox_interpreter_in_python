@@ -29,10 +29,12 @@ logic_and       -> equality ( "and" equality )*;
 
 equality        -> comparison ( ( "!=" | "==" ) comparison )* ;
 
-comparison      -> expr ( ( ">" | ">=" | "<" | "<=" ) expr )* ;
+comparison      -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 
-expr            -> term (("+"|"-") term)*;
+term            -> factor (("+"|"-") factor)*;
 
-term            -> factor (("*"|"/") factor)*;
+factor          -> unary (("*"|"/") unary)*;
 
-factor          -> "-" factor | "!" factor | NUMBER | STRING | "(" expression ")" | IDENTIFIER | "nil" | "true" | "false";
+unary           -> ( "!" | "-" ) unary | primary ;
+
+primary         -> "true" | "false" | "nil" | NUMBER | STRING | IDENTIFIER | "(" expression ")";
