@@ -1,3 +1,4 @@
+from logging.config import IDENTIFIER
 from lox import (
     TT_BANG_EQUAL,
     TT_DIV,
@@ -21,6 +22,7 @@ from lox import (
     TT_IDENTIFIER,
     TT_STRING,
     TT_BANG,
+    TT_COMMA,
     ErrorDetails,
     Token,
 )
@@ -58,6 +60,16 @@ class Logical(AST):
 
     def __repr__(self):
         return f"({self.left}, {self.op}, {self.right})"
+
+
+class Call(AST):
+    def __init__(self, callee, paren, arguments):
+        self.callee = callee
+        self.paren = paren
+        self.arguments = arguments
+
+    def __repr__(self):
+        return f"{self.callee} {self.arguments}"
 
 
 class Primary(AST):
@@ -139,6 +151,7 @@ class IfStmt(Stmt):
     def __repr__(self):
         return f"{self.condition}, {self.then_stmt}, {self.else_stmt}"
 
+
 class WhileStmt(Stmt):
     def __init__(self, condition, body):
         self.condition = condition
@@ -146,6 +159,16 @@ class WhileStmt(Stmt):
 
     def __repr__(self):
         return f"{self.condition}, {self.body}"
+
+
+class Function(Stmt):
+    def __init__(self, name, params, body):
+        self.name = name
+        self.params = params
+        self.body = body
+
+    def __repr__(self):
+        return f"{self.name}, {self.params}, {self.body}"
 
 
 class Parser(object):
@@ -210,6 +233,27 @@ class Parser(object):
                 ErrorDetails.EXPECTED_NUMBER,
             )
 
+    def finish_call(self, callee):
+        arguments = []
+        if self.current_token.type != TT_RPAREN:
+            arguments.append(self.expression())
+            while self.current_token.type == TT_COMMA:
+                self.eat(TT_COMMA)
+                arguments.append(self.expression())
+        paren = self.current_token
+        self.eat(TT_RPAREN, ErrorDetails.EXPECTED_RPAREN)
+        return Call(callee, paren, arguments)
+
+    def call(self):
+        expr = self.primary()
+        while True:
+            if self.current_token.type == TT_LPAREN:
+                self.eat(TT_LPAREN)
+                expr = self.finish_call(expr)
+            else:
+                break
+        return expr
+
     def unary(self):
         token = self.current_token
         if token.type in (TT_MINUS, TT_BANG):
@@ -218,11 +262,10 @@ class Parser(object):
             else:
                 self.eat(TT_BANG)
             return UnaryOp(token, self.unary())
-        return self.primary()
+        return self.call()
 
     def factor(self):
         node = self.unary()
-
         while self.current_token.type in (TT_MUL, TT_DIV):
             token = self.current_token
             if token.type == TT_MUL:
@@ -249,7 +292,12 @@ class Parser(object):
 
     def comparison(self):
         node = self.term()
-        while self.current_token.type in (TT_GREATER, TT_GREATER_EQUAL, TT_LESS, TT_LESS_EQUAL):
+        while self.current_token.type in (
+            TT_GREATER,
+            TT_GREATER_EQUAL,
+            TT_LESS,
+            TT_LESS_EQUAL,
+        ):
             operator = self.current_token
             if operator.type == TT_GREATER:
                 self.eat(TT_GREATER)
@@ -259,7 +307,7 @@ class Parser(object):
                 self.eat(TT_LESS)
             elif operator.type == TT_LESS_EQUAL:
                 self.eat(TT_LESS_EQUAL)
-            
+
             right = self.term()
             node = BinOp(node, operator, right)
         return node
@@ -425,10 +473,31 @@ class Parser(object):
         )
         return VarStmt(token, expr)
 
+    def function(self):
+        name = self.current_token
+        self.eat(TT_IDENTIFIER, "Expected function name")
+        self.eat(TT_LPAREN, ErrorDetails.EXPECTED_LPAREN)
+        parameters = []
+        if self.current_token.type != TT_RPAREN:
+            token = self.current_token
+            self.eat(TT_IDENTIFIER, "Expected parameter name")
+            parameters.append(token)
+            while self.current_token.type == TT_COMMA:
+                self.eat(TT_COMMA)
+                token = self.current_token
+                self.eat(TT_IDENTIFIER, "Expected parameter name")
+                parameters.append(token)
+        self.eat(TT_RPAREN, ErrorDetails.EXPECTED_RPAREN)
+        body = self.block()
+        return Function(name, parameters, body)
+
     def declaration(self):
         if self.current_token.matches(TT_KEYWORD, "var"):
             self.eat(TT_KEYWORD)
             return self.var_decl()
+        elif self.current_token.matches(TT_KEYWORD, "fun"):
+            self.eat(TT_KEYWORD)
+            return self.function()
         else:
             return self.statement()
 

@@ -28,8 +28,22 @@ TT_LESS = "LESS"
 TT_GREATER_EQUAL = "GREATER_EQUAL"
 TT_GREATER = "GREATER"
 TT_EQUAL_EQUAL = "EQUAL_EQUAL"
+TT_COMMA = "COMMA"
 
-KEYWORDS = ["print", "var", "nil", "true", "false", "if", "else", "and", "or", "while", "for"]
+KEYWORDS = [
+    "print",
+    "var",
+    "nil",
+    "true",
+    "false",
+    "if",
+    "else",
+    "and",
+    "or",
+    "while",
+    "for",
+    "fun",
+]
 
 
 class ErrorDetails(Enum):
@@ -244,6 +258,10 @@ class Lexer:
             if self.current_char == '"':
                 self.advance()
                 return self.make_string()
+
+            if self.current_char == ",":
+                self.advance()
+                return Token(TT_COMMA, ",", self.pos)
 
             if self.current_char in DIGITS:
                 number_token, error = self.make_number()

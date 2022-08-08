@@ -16,6 +16,7 @@ from lox import (
 )
 
 from lox import RTError
+from lox_callable import LoxCallable, LoxFunction
 
 
 class NodeVisitor(object):
@@ -181,12 +182,16 @@ class Interpreter(NodeVisitor):
             self.visit(node.body)
         return None
 
-    def visit_Block(self, node):
+    def execute_Block(self, statements, environment):
         previous_env = self.environment
-        self.environment = Environment(previous_env)
-        for stmt in node.statements:
+        self.environment = environment
+        for stmt in statements:
             self.visit(stmt)
         self.environment = previous_env
+
+    def visit_Block(self, node):
+        self.execute_Block(node.statements, Environment(self.environment))
+        return None
 
     def visit_Assign(self, node):
         var_name = node.left.value
@@ -200,6 +205,39 @@ class Interpreter(NodeVisitor):
         return self.environment.get(
             node.token.pos_start, node.token.pos_end, node.value
         )
+
+    def visit_Call(self, node):
+        function = self.visit(node.callee)
+        if not isinstance(function, LoxCallable):
+            raise RTError(
+                node.callee.token.pos_start,
+                node.callee.token.pos_end,
+                "Can only call functions and classes.",
+            )
+        arguments = []
+        for argument in node.arguments:
+            arguments.append(self.visit(argument))
+        if len(arguments) != function.arity():
+            if node.arguments:
+                raise RTError(
+                    node.arguments[0].token.pos_start,
+                    node.arguments[0].token.pos_end,
+                    f"Expected {function.arity()} arguments, but got {len(arguments)}.",
+                )
+            else:
+                raise RTError(
+                    node.paren.pos_start,
+                    node.paren.pos_end,
+                    f"Expected {function.arity()} arguments, but got {len(arguments)}.",
+                )
+        return function.call(self, arguments)
+
+    def visit_Function(self, stmt):
+        function = LoxFunction(stmt)
+        self.environment.define(
+            stmt.name.value, function, stmt.name.pos_start, stmt.name.pos_end
+        )
+        return None
 
     def interpret(self):
         tree = self.parser.parse()
