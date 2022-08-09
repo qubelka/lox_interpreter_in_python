@@ -1,10 +1,8 @@
 import sys
-from lox import Lexer
-from parser import Parser
-from interpreter import Interpreter
-from environment import Environment
+from lox import Lox
 
-environment = Environment()
+
+lox = Lox()
 
 while True:
     try:
@@ -12,15 +10,12 @@ while True:
         text = None
         if len(sys.argv) > 1:
             repl = False
-            text = open(sys.argv[1], 'r').read()
+            text = open(sys.argv[1], "r").read()
         else:
             text = input("> ")
         if not text:
             continue
-        lexer = Lexer("<stdin>", text)
-        parser = Parser(lexer)
-        interpreter = Interpreter(parser, environment)
-        result = interpreter.interpret()
+        result = lox.run(text)
         if not repl:
             break
         if result is not None:

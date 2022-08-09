@@ -1,4 +1,4 @@
-from lox import ErrorDetails, RTError
+from lexer import ErrorDetails, RTError
 
 
 class Environment:

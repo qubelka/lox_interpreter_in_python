@@ -1,5 +1,5 @@
 from environment import Environment
-from lox import (
+from lexer import (
     TT_BANG,
     TT_BANG_EQUAL,
     TT_EQUAL_EQUAL,
@@ -15,8 +15,8 @@ from lox import (
     ErrorDetails,
 )
 
-from lox import RTError
-from lox_callable import LoxCallable, LoxFunction
+from lexer import RTError
+from lox_callable import LoxCallable, LoxFunction, Clock
 
 
 class NodeVisitor(object):
@@ -30,9 +30,11 @@ class NodeVisitor(object):
 
 
 class Interpreter(NodeVisitor):
-    def __init__(self, parser, environment):
-        self.parser = parser
-        self.environment = environment
+    def __init__(self):
+        self.globals = Environment()
+        # TODO position for native functions: None?
+        self.globals.define("clock", Clock(), None, None)
+        self.environment = self.globals
 
     def is_truthy(self, value):
         if value == None or value == "nil" or value == "false":
@@ -212,7 +214,7 @@ class Interpreter(NodeVisitor):
             raise RTError(
                 node.callee.token.pos_start,
                 node.callee.token.pos_end,
-                "Can only call functions and classes.",
+                ErrorDetails.CALLS_RESTRICTION,
             )
         arguments = []
         for argument in node.arguments:
@@ -239,7 +241,9 @@ class Interpreter(NodeVisitor):
         )
         return None
 
-    def interpret(self):
+    def interpret(self, parser):
+        self.parser = parser
+
         tree = self.parser.parse()
         if not tree:
             return None
