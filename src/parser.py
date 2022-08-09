@@ -1,5 +1,4 @@
-from logging.config import IDENTIFIER
-from lox import (
+from lexer import (
     TT_BANG_EQUAL,
     TT_DIV,
     TT_EQ,
@@ -24,9 +23,10 @@ from lox import (
     TT_BANG,
     TT_COMMA,
     ErrorDetails,
+    RTError,
     Token,
 )
-from lox import InvalidSyntaxError
+from lexer import InvalidSyntaxError
 
 
 class AST(object):
@@ -239,6 +239,12 @@ class Parser(object):
             arguments.append(self.expression())
             while self.current_token.type == TT_COMMA:
                 self.eat(TT_COMMA)
+                if len(arguments) >= 255:
+                    raise RTError(
+                        self.current_token.pos_start,
+                        self.current_token.pos_end,
+                        ErrorDetails.CANT_HAVE_MORE_THAN_255_ARGS,
+                    )
                 arguments.append(self.expression())
         paren = self.current_token
         self.eat(TT_RPAREN, ErrorDetails.EXPECTED_RPAREN)
@@ -475,17 +481,17 @@ class Parser(object):
 
     def function(self):
         name = self.current_token
-        self.eat(TT_IDENTIFIER, "Expected function name")
+        self.eat(TT_IDENTIFIER, ErrorDetails.EXPECTED_FUNCTION_NAME)
         self.eat(TT_LPAREN, ErrorDetails.EXPECTED_LPAREN)
         parameters = []
         if self.current_token.type != TT_RPAREN:
             token = self.current_token
-            self.eat(TT_IDENTIFIER, "Expected parameter name")
+            self.eat(TT_IDENTIFIER, ErrorDetails.EXPECTED_PARAMETER_NAME)
             parameters.append(token)
             while self.current_token.type == TT_COMMA:
                 self.eat(TT_COMMA)
                 token = self.current_token
-                self.eat(TT_IDENTIFIER, "Expected parameter name")
+                self.eat(TT_IDENTIFIER, ErrorDetails.EXPECTED_PARAMETER_NAME)
                 parameters.append(token)
         self.eat(TT_RPAREN, ErrorDetails.EXPECTED_RPAREN)
         body = self.block()
