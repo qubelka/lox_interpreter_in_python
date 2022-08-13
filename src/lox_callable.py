@@ -4,6 +4,8 @@ from abc import ABCMeta, abstractmethod
 from environment import Environment
 from parser import Stmt
 
+from lexer import Return
+
 if TYPE_CHECKING:
     from interpreter import Interpreter
 
@@ -34,8 +36,11 @@ class LoxFunction(LoxCallable):
                 self.declaration.params[i].pos_start,
                 self.declaration.params[i].pos_end,
             )
-        interpreter.execute_Block(self.declaration.body, environment)
-        return None
+        try:
+            interpreter.execute_Block(self.declaration.body, environment)
+        except Return as return_value:
+            return return_value.value
+        return "nil"
 
     def __repr__(self):
         return f"<fn {self.declaration.name.value}>"

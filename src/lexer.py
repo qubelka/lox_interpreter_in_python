@@ -43,6 +43,7 @@ KEYWORDS = {
     "while": True,
     "for": True,
     "fun": True,
+    "return": True
 }
 
 
@@ -70,6 +71,7 @@ class ErrorDetails(Enum):
     CANT_HAVE_MORE_THAN_255_ARGS = "Can't have more than 255 arguments"
     EXPECTED_FUNCTION_NAME =  "Expected function name"
     EXPECTED_PARAMETER_NAME = "Expected parameter name"
+    EXPECTED_SEMICOLON = "Expected ';'"
 
 
 class Error(Exception):
@@ -102,6 +104,11 @@ class InvalidSyntaxError(Error):
 class RTError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, "Runtime Error", details)
+
+
+class Return(Exception):
+    def __init__(self, value):
+        self.value = value
 
 
 class Position:

@@ -15,7 +15,7 @@ from lexer import (
     ErrorDetails,
 )
 
-from lexer import RTError
+from lexer import RTError, Return
 from lox_callable import LoxCallable, LoxFunction, Clock
 
 
@@ -184,12 +184,20 @@ class Interpreter(NodeVisitor):
             self.visit(node.body)
         return None
 
+    def visit_ReturnStmt(self, node):
+        value = None
+        if node.value is not None:
+            value = self.visit(node.value)
+        raise Return(value)
+
     def execute_Block(self, statements, environment):
         previous_env = self.environment
-        self.environment = environment
-        for stmt in statements:
-            self.visit(stmt)
-        self.environment = previous_env
+        try:
+            self.environment = environment
+            for stmt in statements:
+                self.visit(stmt)
+        finally:
+            self.environment = previous_env
 
     def visit_Block(self, node):
         self.execute_Block(node.statements, Environment(self.environment))

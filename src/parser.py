@@ -161,6 +161,15 @@ class WhileStmt(Stmt):
         return f"{self.condition}, {self.body}"
 
 
+class ReturnStmt(Stmt):
+    def __init__(self, keyword, value):
+        self.keyword = keyword
+        self.value = value
+
+    def __repr__(self):
+        return f"{self.keyword}, {self.value}"
+
+
 class Function(Stmt):
     def __init__(self, name, params, body):
         self.name = name
@@ -374,6 +383,15 @@ class Parser(object):
             )
         return expr
 
+    def return_stmt(self):
+        keyword = self.previous_token
+        value = None
+        if self.current_token.type != TT_SEMI:
+            value = self.expression()
+        self.eat(TT_SEMI, error=ErrorDetails.EXPECTED_SEMICOLON)
+        return ReturnStmt(keyword, value)
+
+
     def for_stmt(self):
         self.eat(TT_LPAREN, error=ErrorDetails.EXPECTED_LPAREN)
         initializer = None
@@ -462,6 +480,9 @@ class Parser(object):
         elif self.current_token.matches(TT_KEYWORD, "for"):
             self.eat(TT_KEYWORD)
             return self.for_stmt()
+        elif self.current_token.matches(TT_KEYWORD, "return"):
+            self.eat(TT_KEYWORD)
+            return self.return_stmt()
         return self.expression_stmt()
 
     def var_decl(self):

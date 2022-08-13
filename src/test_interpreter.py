@@ -910,6 +910,50 @@ class TestInterpreter(unittest.TestCase):
             e.exception.args[2],
         )
 
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_return(self, mock_stdout):
+        text = """
+        fun abs(n) {
+            if (n<0) {
+                return -n;
+            }
+            return n;
+        }
+        print abs(3);
+        print abs(-4);
+        """
+        self.makeInterpreter(text)
+        self.assertEqual(mock_stdout.getvalue(), "3.0\n4.0\n")
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_return2(self, mock_stdout):
+        text = """
+        fun fib(n) {
+            if (n <= 1) return n;
+            return fib(n - 2) + fib(n - 1);
+        }
+
+        for (var i = 0; i < 10; i = i + 1) {
+            print fib(i);
+        }
+        """
+        self.makeInterpreter(text)
+        self.assertEqual(mock_stdout.getvalue(), "0.0\n1.0\n1.0\n2.0\n3.0\n5.0\n8.0\n13.0\n21.0\n34.0\n")
+
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_return3(self, mock_stdout):
+        text = """
+        fun procedure() {
+            print "no return";
+        }
+
+        var result = procedure();
+        print result;
+        """
+        self.makeInterpreter(text)
+        self.assertEqual(mock_stdout.getvalue(), "no return\nnil\n")
+
 
 if __name__ == "__main__":
     unittest.main()
